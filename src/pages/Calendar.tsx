@@ -118,8 +118,8 @@ const Calendar: React.FC = () => {
   return (
     <>
       <PageMeta
-        title="Test Dashboard"
-        description="This is React.js Calendar Dashboard page - Test Dashboard"
+        title="Kalendar"
+        description="Kurs Platformasi - Kalendar"
       />
       <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">

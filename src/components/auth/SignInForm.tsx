@@ -19,14 +19,14 @@ export default function SignInForm() {
     e.preventDefault();
 
     try {
-      const res = await axiosClient.post('/auth/login', { login, password });
+      const res = await axiosClient.post('/admin/login', { login, password });
 
-      if (!(res.data.user && res.data.user.role == "ADMIN")) {
-        throw new Error("Login yoki parol noto‘g‘ri : " + JSON.stringify(res.data.user),);
+      if (!(res.data.admin && res.data.admin.role == "ADMIN" || res.data.admin.role == "SUPER_ADMIN")) {
+        throw new Error("Login yoki parol noto'g'ri : " + JSON.stringify(res.data.admin),);
       }
 
       localStorage.setItem('token', res.data.access_token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem('admin_user', JSON.stringify(res.data.admin));
 
 
       navigate('/');
@@ -118,7 +118,7 @@ export default function SignInForm() {
                   <Label>
                     Login <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="Login" onChange={(e) => setLogin(e.target.value)} />
+                  <Input placeholder="Login" autoComplete="username" onChange={(e) => setLogin(e.target.value)} />
                 </div>
                 <div>
                   <Label>
@@ -128,6 +128,7 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Parolni kiriting"
+                      autoComplete="current-password"
                       onChange={(e) => setPassword(e.target.value)}
                     />
                     <span

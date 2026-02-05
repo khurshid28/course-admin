@@ -490,7 +490,7 @@ export default function TestsPage() {
   };
   return (
     <>
-      <PageMeta title="Tests | Test Dashboard" description="Test Dashboard" />
+      <PageMeta title="Testlar" description="Kurs Platformasi - Testlar" />
       <PageBreadcrumb pageTitle="Testlar" />
 
       <div className="space-y-6 ">

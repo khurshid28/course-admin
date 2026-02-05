@@ -102,7 +102,7 @@ export default function SectionsPage() {
 
     return (
         <>
-            <PageMeta title="Sections | Test Dashboard" description="Test Dashboard" />
+            <PageMeta title="Test Bo'limlari" description="Kurs Platformasi - Test Bo'limlari" />
             <PageBreadcrumb pageTitle="Bo'limlar" />
 
             <div className="space-y-6 ">

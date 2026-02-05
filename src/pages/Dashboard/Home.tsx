@@ -1,16 +1,14 @@
 import DashboardMetrics from "../../components/dashboard/DashboardMetrics";
-import SubjectDistributionChart from "../../components/dashboard/SubjectDistributionChart";
-import RecentTests from "../../components/dashboard/RecentTests";
-import GroupStatistics from "../../components/dashboard/GroupStatistics";
-import PerformanceChart from "../../components/dashboard/PerformanceChart";
+import CoursesChart from "../../components/dashboard/CoursesChart";
+import RevenueChart from "../../components/dashboard/RevenueChart";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function Home() {
   return (
     <>
       <PageMeta
-        title="Test Tizimi Dashboard"
-        description="Test Tizimi Dashboard"
+        title="Kurs Platformasi"
+        description="Kurs Platformasi - Administrator Paneli"
       />
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         {/* Asosiy statistikalar */}
@@ -18,20 +16,12 @@ export default function Home() {
           <DashboardMetrics />
         </div>
 
-        {/* Fanlar taqsimoti va oxirgi testlar */}
-        <div className="col-span-12 space-y-6 xl:col-span-8">
-          <SubjectDistributionChart />
-          <PerformanceChart />
+        {/* Chart'lar */}
+        <div className="col-span-12 lg:col-span-6">
+          <CoursesChart />
         </div>
-
-        {/* Guruhlar statistikasi */}
-        <div className="col-span-12 xl:col-span-4">
-          <GroupStatistics />
-        </div>
-
-        {/* Oxirgi testlar */}
-        <div className="col-span-12">
-          <RecentTests />
+        <div className="col-span-12 lg:col-span-6">
+          <RevenueChart />
         </div>
       </div>
     </>

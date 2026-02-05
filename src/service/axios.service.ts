@@ -31,7 +31,12 @@ axiosClient.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token"); // Tokenni o‘chir
-      window.location.href = "/signin"; // Foydalanuvchini login sahifasiga qaytar
+      localStorage.removeItem("admin_user"); // Admin userini o'chir
+      // Admin sahifasida bo'lsa admin loginga, aks holda user loginga otsinda
+      const isAdminRoute = window.location.pathname.startsWith('/admin') || 
+                           window.location.pathname === '/' ||
+                           localStorage.getItem('admin_user');
+      window.location.href = isAdminRoute ? "/admin/login" : "/signin";
     }
     return Promise.reject(error);
   }

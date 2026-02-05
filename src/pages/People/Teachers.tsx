@@ -43,8 +43,8 @@ export default function TeachersPage() {
   return (
     <>
       <PageMeta
-        title="Teachers | Test Dashboard"
-        description="Test Dashboard"
+        title="O'qituvchilar"
+        description="Kurs Platformasi - O'qituvchilar"
       />
       <PageBreadcrumb pageTitle="Teachers" />
    

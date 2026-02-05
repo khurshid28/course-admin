@@ -175,8 +175,8 @@ const handleResetFilters = () => {
   return (
     <>
       <PageMeta
-        title="Test Dashboard"
-        description="Test Dashboard"
+        title="Test Natijalari"
+        description="Kurs Platformasi - Test Natijalari"
       />
       <PageBreadcrumb pageTitle="Natijalar" />
       <div className="space-y-6">

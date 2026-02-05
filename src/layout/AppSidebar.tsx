@@ -3,19 +3,21 @@ import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
-  BoxCubeIcon,
+  VideoIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
   PageIcon,
-  PieChartIcon,
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
-  StarHexaIcon,
-  ShootingStarIcon
+  ChatIcon,
+  MailIcon,
+  TagIcon,
+  WalletIcon,
+  MegaphoneIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -29,68 +31,75 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Analytics", path: "/", pro: false }],
+    icon: <GridIcon className="fill-current" />,
+    name: "Asosiy",
+    subItems: [{ name: "Statistika", path: "/", pro: false }],
   },
   {
-    icon: <ShootingStarIcon />,
-    name: "Reyting",
-    path: "/rate",
+    icon: <VideoIcon className="fill-current" />,
+    name: "Kurslar",
+    subItems: [
+      { name: "Barcha Kurslar", path: "/courses", pro: false },
+      { name: "Kategoriyalar", path: "/categories", pro: false },
+      { name: "Videolar", path: "/videos", pro: false },
+      { name: "Bo'limlar", path: "/course-sections", pro: false },
+      { name: "FAQs", path: "/faqs", pro: false },
+    ],
   },
-  // {
-  //   icon: <CalenderIcon />,
-  //   name: "Calendar",
-  //   path: "/calendar",
-  // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "User Profile",
-  //   path: "/profile",
-  // },
   {
-    name: "Adminstator",
-    icon: <UserCircleIcon />,
+    icon: <UserCircleIcon className="fill-current" />,
+    name: "Foydalanuvchilar",
     subItems: [
       { name: "O'qituvchilar", path: "/teachers", pro: false },
-      { name: "Guruhlar", path: "/groups", pro: false },
-      { name: "Studentlar", path: "/students", pro: false }
-    
+      { name: "Talabalar", path: "/students", pro: false },
+      { name: "Adminlar", path: "/admins", pro: false },
     ],
   },
-
   {
-    name: "Test",
-    icon: <ListIcon />,
+    name: "Testlar",
+    icon: <ListIcon className="fill-current" />,
     subItems: [
-      { name: "Fanlar", path: "/subjects", pro: false },
-      { name: "Kitoblar", path: "/books", pro: false },
-      { name: "Bo'limlar", path: "/sections", pro: false },
       { name: "Testlar", path: "/tests", pro: false },
-      { name: "Maxsus Test", path: "/special-tests", pro: false },
-      { name: "Natijalar", path: "/results", pro: false }
-    
+      { name: "Natijalar", path: "/test-results", pro: false },
+      { name: "Sertifikatlar", path: "/certificates", pro: false },
     ],
   },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  // },
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
-  
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
+  {
+    icon: <TagIcon className="fill-current" />,
+    name: "Marketing",
+    subItems: [
+      { name: "Bannerlar", path: "/banners", pro: false },
+      { name: "Promo Kodlar", path: "/promo-codes", pro: false },
+    ],
+  },
+  {
+    icon: <WalletIcon className="fill-current" />,
+    name: "Moliya",
+    subItems: [
+      { name: "To'lovlar", path: "/payments", pro: false },
+      { name: "Obunalar", path: "/enrollments", pro: false },
+    ],
+  },
+  {
+    icon: <ChatIcon className="fill-current" />,
+    name: "Fikrlar",
+    subItems: [
+      { name: "Izohlar", path: "/comments", pro: false },
+    ],
+  },
+  {
+    icon: <MegaphoneIcon className="fill-current" />,
+    name: "Yangiliklar",
+    subItems: [
+      { name: "Barcha Yangiliklar", path: "/news", pro: false },
+      { name: "Yangi E'lon", path: "/news/create", pro: false },
+    ],
+  },
+  {
+    icon: <MailIcon className="fill-current" />,
+    name: "Bildirishnomalar",
+    path: "/notifications",
+  },
 ];
 
 // const othersItems: NavItem[] = [

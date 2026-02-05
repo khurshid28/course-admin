@@ -250,7 +250,7 @@ export default function BooksPage() {
 
   return (
     <>
-      <PageMeta title="Books | Test Dashboard" description="Test Dashboard" />
+      <PageMeta title="Kitoblar" description="Kurs Platformasi - Kitoblar" />
       <PageBreadcrumb pageTitle="Kitoblar" />
 
 

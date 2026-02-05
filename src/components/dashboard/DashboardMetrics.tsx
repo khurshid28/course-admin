@@ -3,26 +3,26 @@ import axiosClient from "../../service/axios.service";
 import { LoadSpinner } from "../spinner/load-spinner";
 
 interface DashboardStats {
-  students: number;
+  users: number;
   teachers: number;
-  groups: number;
-  subjects: number;
-  books: number;
-  tests: number;
+  courses: number;
+  categories: number;
+  videos: number;
   sections: number;
-  testItems: number;
+  payments: number;
+  enrollments: number;
 }
 
 export default function DashboardMetrics() {
   const [stats, setStats] = useState<DashboardStats>({
-    students: 0,
+    users: 0,
     teachers: 0,
-    groups: 0,
-    subjects: 0,
-    books: 0,
-    tests: 0,
+    courses: 0,
+    categories: 0,
+    videos: 0,
     sections: 0,
-    testItems: 0,
+    payments: 0,
+    enrollments: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -30,32 +30,34 @@ export default function DashboardMetrics() {
     const fetchStats = async () => {
       try {
         const [
-          studentsRes,
-          groupsRes,
-          subjectsRes,
-          booksRes,
-          testsRes,
+          usersRes,
+          teachersRes,
+          coursesRes,
+          categoriesRes,
+          videosRes,
           sectionsRes,
-          testItemsRes,
+          paymentsRes,
+          enrollmentsRes,
         ] = await Promise.all([
-          axiosClient.get('/student/all'),
-          axiosClient.get('/group/all'),
-          axiosClient.get('/subject/all'),
-          axiosClient.get('/book/all'),
-          axiosClient.get('/test/all'),
-          axiosClient.get('/section/all'),
-          axiosClient.get('/test-item/all'),
+          axiosClient.get('/user').catch(() => ({ data: [] })),
+          axiosClient.get('/teacher').catch(() => ({ data: [] })),
+          axiosClient.get('/courses').catch(() => ({ data: [] })),
+          axiosClient.get('/category').catch(() => ({ data: [] })),
+          axiosClient.get('/courses').then(res => ({ data: res.data?.flatMap((c: any) => c.videos || []) || [] })).catch(() => ({ data: [] })),
+          axiosClient.get('/sections').catch(() => ({ data: [] })),
+          axiosClient.get('/payment').catch(() => ({ data: [] })),
+          axiosClient.get('/courses').then(res => ({ data: res.data?.flatMap((c: any) => c.enrollments || []) || [] })).catch(() => ({ data: [] })),
         ]);
 
         setStats({
-          students: studentsRes.data?.length || 0,
-          teachers: 0, // Teachers API mavjud emas, keyinroq qo'shiladi
-          groups: groupsRes.data?.length || 0,
-          subjects: subjectsRes.data?.length || 0,
-          books: booksRes.data?.length || 0,
-          tests: testsRes.data?.length || 0,
-          sections: sectionsRes.data?.length || 0,
-          testItems: testItemsRes.data?.length || 0,
+          users: Array.isArray(usersRes.data) ? usersRes.data.length : 0,
+          teachers: Array.isArray(teachersRes.data) ? teachersRes.data.length : 0,
+          courses: Array.isArray(coursesRes.data) ? coursesRes.data.length : 0,
+          categories: Array.isArray(categoriesRes.data) ? categoriesRes.data.length : 0,
+          videos: Array.isArray(videosRes.data) ? videosRes.data.length : 0,
+          sections: Array.isArray(sectionsRes.data) ? sectionsRes.data.length : 0,
+          payments: Array.isArray(paymentsRes.data) ? paymentsRes.data.length : 0,
+          enrollments: Array.isArray(enrollmentsRes.data) ? enrollmentsRes.data.length : 0,
         });
       } catch (error) {
         console.error('Statistika yuklanmadi:', error);
@@ -85,53 +87,11 @@ export default function DashboardMetrics() {
 
   const metrics = [
     {
-      title: "Jami o'quvchilar",
-      value: stats.students,
+      title: "Foydalanuvchilar",
+      value: stats.users,
       icon: "👨‍🎓",
       color: "text-blue-600",
       bgColor: "bg-blue-100 dark:bg-blue-900/20",
-    },
-    {
-      title: "Guruhlar",
-      value: stats.groups,
-      icon: "👥",
-      color: "text-green-600",
-      bgColor: "bg-green-100 dark:bg-green-900/20",
-    },
-    {
-      title: "Fanlar",
-      value: stats.subjects,
-      icon: "📚",
-      color: "text-purple-600",
-      bgColor: "bg-purple-100 dark:bg-purple-900/20",
-    },
-    {
-      title: "Kitoblar",
-      value: stats.books,
-      icon: "📖",
-      color: "text-orange-600",
-      bgColor: "bg-orange-100 dark:bg-orange-900/20",
-    },
-    {
-      title: "Testlar",
-      value: stats.tests,
-      icon: "📝",
-      color: "text-red-600",
-      bgColor: "bg-red-100 dark:bg-red-900/20",
-    },
-    {
-      title: "Bo'limlar",
-      value: stats.sections,
-      icon: "📂",
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-100 dark:bg-indigo-900/20",
-    },
-    {
-      title: "Test savollari",
-      value: stats.testItems,
-      icon: "❓",
-      color: "text-pink-600",
-      bgColor: "bg-pink-100 dark:bg-pink-900/20",
     },
     {
       title: "O'qituvchilar",
@@ -139,6 +99,48 @@ export default function DashboardMetrics() {
       icon: "👨‍🏫",
       color: "text-teal-600",
       bgColor: "bg-teal-100 dark:bg-teal-900/20",
+    },
+    {
+      title: "Kurslar",
+      value: stats.courses,
+      icon: "📚",
+      color: "text-purple-600",
+      bgColor: "bg-purple-100 dark:bg-purple-900/20",
+    },
+    {
+      title: "Kategoriyalar",
+      value: stats.categories,
+      icon: "📂",
+      color: "text-orange-600",
+      bgColor: "bg-orange-100 dark:bg-orange-900/20",
+    },
+    {
+      title: "Videolar",
+      value: stats.videos,
+      icon: "🎥",
+      color: "text-red-600",
+      bgColor: "bg-red-100 dark:bg-red-900/20",
+    },
+    {
+      title: "Kurs bo'limlari",
+      value: stats.sections,
+      icon: "📑",
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-100 dark:bg-indigo-900/20",
+    },
+    {
+      title: "To'lovlar",
+      value: stats.payments,
+      icon: "💰",
+      color: "text-green-600",
+      bgColor: "bg-green-100 dark:bg-green-900/20",
+    },
+    {
+      title: "Obunalar",
+      value: stats.enrollments,
+      icon: "✅",
+      color: "text-pink-600",
+      bgColor: "bg-pink-100 dark:bg-pink-900/20",
     },
   ];
 

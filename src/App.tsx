@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
+import AdminLogin from "./pages/AuthPages/AdminLogin";
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
 import Images from "./pages/UiElements/Images";
 import Alerts from "./pages/UiElements/Alerts";
 import Badges from "./pages/UiElements/Badges";
@@ -17,16 +17,39 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
-import RatePage from "./pages/Rate/rate";
+
+// People Pages
 import TeachersPage from "./pages/People/Teachers";
 import StudentsPage from "./pages/People/Students";
-import GroupsPage from "./pages/People/Groups";
-import SubjectsPage from "./pages/Test/Subjects";
-import BooksPage from "./pages/Test/Books";
-import SectionsPage from "./pages/Test/Sections";
-import ResultsPage from "./pages/Test/Results";
+import AdminsPage from "./pages/People/Admins";
+
+// Test Pages
 import TestsPage from "./pages/Test/Tests";
-import SpecialTestsPage from "./pages/Test/SpecialTests";
+import TestResultsPage from "./pages/Test/TestResults";
+import CertificatesPage from "./pages/Test/Certificates";
+
+// Course Pages
+import CoursesPage from "./pages/Courses/Courses";
+import CategoriesPage from "./pages/Courses/Categories";
+import VideosPage from "./pages/Courses/Videos";
+import CourseSectionsPage from "./pages/Courses/CourseSections";
+import FAQsPage from "./pages/Courses/FAQs";
+
+// Marketing Pages
+import BannersPage from "./pages/Marketing/Banners";
+import PromoCodesPage from "./pages/Marketing/PromoCodes";
+
+// Finance Pages
+import PaymentsPage from "./pages/Finance/Payments";
+import EnrollmentsPage from "./pages/Finance/Enrollments";
+
+// Comments & Notifications
+import CommentsPage from "./pages/Comments/Comments";
+import NotificationsPage from "./pages/Notifications/Notifications";
+
+// News Pages
+import NewsPage from "./pages/News/News";
+import NewsFormPage from "./pages/News/NewsForm";
 
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -42,28 +65,41 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
 
+            {/* Course Management */}
+            <Route path="/courses" element={<CoursesPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/videos" element={<VideosPage />} />
+            <Route path="/course-sections" element={<CourseSectionsPage />} />
+            <Route path="/faqs" element={<FAQsPage />} />
 
-             {/* People Page */}
-             <Route path="/teachers" element={<TeachersPage />} />
-             <Route path="/groups" element={< GroupsPage />} />
-             <Route path="/students" element={<StudentsPage />} />
+            {/* People Management */}
+            <Route path="/teachers" element={<TeachersPage />} />
+            <Route path="/students" element={<StudentsPage />} />
+            <Route path="/admins" element={<AdminsPage />} />
 
-
-
-            {/* People Page */}
-            <Route path="/subjects" element={<SubjectsPage />} />
-            <Route path="/books" element={<BooksPage />} />
-            <Route path="/sections" element={<SectionsPage />} />
+            {/* Test Management */}
             <Route path="/tests" element={<TestsPage />} />
-            <Route path="/special-tests" element={<SpecialTestsPage />} />
+            <Route path="/test-results" element={<TestResultsPage />} />
+            <Route path="/certificates" element={<CertificatesPage />} />
 
-            <Route path="/results" element={<ResultsPage />} />
+            {/* Marketing */}
+            <Route path="/banners" element={<BannersPage />} />
+            <Route path="/promo-codes" element={<PromoCodesPage />} />
 
+            {/* Finance */}
+            <Route path="/payments" element={<PaymentsPage />} />
+            <Route path="/enrollments" element={<EnrollmentsPage />} />
 
+            {/* Comments & Notifications */}
+            <Route path="/comments" element={<CommentsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
 
-            <Route index path="/rate" element={<RatePage />} />
+            {/* News */}
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/news/create" element={<NewsFormPage />} />
+            <Route path="/news/edit/:id" element={<NewsFormPage />} />
 
-            {/* Others Page */}
+            {/* Others */}
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
@@ -74,31 +110,28 @@ export default function App() {
             {/* Tables */}
             <Route path="/basic-tables" element={<BasicTables />} />
 
-            {/* Ui Elements */}
+            {/* UI Elements */}
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/avatars" element={<Avatars />} />
             <Route path="/badge" element={<Badges />} />
             <Route path="/buttons" element={<Buttons />} />
             <Route path="/images" element={<Images />} />
-            {/* <Route path="/videos" element={<Videos />} /> */}
 
             {/* Charts */}
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
           </Route>
 
-          {/* Auth Layout */}
+          {/* Auth Pages */}
           <Route path="/signin" element={<SignIn />} />
-          {/* <Route path="/signup" element={<SignUp />} /> */}
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
 
-      <ToastContainer position="bottom-right"  autoClose={2000}
-  hideProgressBar={false}/>
-
+      <ToastContainer position="bottom-right" autoClose={2000} hideProgressBar={false} />
     </>
   );
 }

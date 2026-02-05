@@ -1104,8 +1104,8 @@ export default function SpecialTestsPage() {
   return (
     <>
       <PageMeta
-        title="Maxsus Testlar | Test Dashboard"
-        description="Test Dashboard"
+        title="Maxsus Testlar"
+        description="Kurs Platformasi - Maxsus Testlar"
       />
       <PageBreadcrumb pageTitle="Maxsus Testlar" />
 

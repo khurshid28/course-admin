@@ -59,6 +59,10 @@ import { ReactComponent as StarHexaIcon } from "./star-hexa.svg?react";
 
 import { ReactComponent as EditIcon } from "./edit.svg?react";
 import { ReactComponent as DeleteIcon } from "./delete.svg?react";
+import { ReactComponent as SearchIcon } from "./search.svg?react";
+import { ReactComponent as TagIcon } from "./tag.svg?react";
+import { ReactComponent as WalletIcon } from "./wallet.svg?react";
+import { ReactComponent as MegaphoneIcon } from "./megaphone.svg?react";
 
 
 
@@ -122,5 +126,9 @@ export {
   StarHexaIcon,
   EditIcon,
   DeleteIcon,
+  SearchIcon,
+  TagIcon,
+  WalletIcon,
+  MegaphoneIcon,
   CloseCircleIcon
 };
