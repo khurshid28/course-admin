@@ -28,7 +28,7 @@ export default function CertificatesPage() {
   const itemsPerPage = 15;
 
   const fetchCertificates = useCallback(() => {
-    return axiosClient.get('/tests/certificates/my').then(res => res.data);
+    return axiosClient.get('/tests/certificates/all').then(res => res.data);
   }, []);
 
   const { data, isLoading, refetch } = useFetchWithLoader({
@@ -100,7 +100,7 @@ export default function CertificatesPage() {
                   placeholder="Qidirish..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+                  className="h-11 pl-10 pr-4 rounded-lg border text-sm bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:bg-gray-900 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800 focus:outline-hidden"
                 />
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
               </div>
@@ -108,43 +108,57 @@ export default function CertificatesPage() {
           >
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b dark:border-gray-700">
-                    <th className="text-left p-4">ID</th>
-                    <th className="text-left p-4">Sertifikat №</th>
-                    <th className="text-left p-4">Talaba</th>
-                    <th className="text-left p-4">Berilgan sana</th>
-                    <th className="text-right p-4">Harakatlar</th>
+                <thead className="bg-gray-50 dark:bg-gray-800/50">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Sertifikat №
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Talaba
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Berilgan sana
+                    </th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Harakatlar
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                   {currentItems.map((certificate) => (
-                    <tr key={certificate.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="p-4">{certificate.id}</td>
-                      <td className="p-4">
-                        <span className="font-mono font-bold">{certificate.certificateNo}</span>
+                    <tr key={certificate.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {certificate.id}
                       </td>
-                      <td className="p-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono font-bold text-sm text-brand-600 dark:text-brand-400">
+                          {certificate.certificateNo}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         {certificate.user?.firstName || certificate.user?.lastName
                           ? `${certificate.user.firstName || ''} ${certificate.user.lastName || ''}`.trim()
                           : `User #${certificate.userId}`
                         }
                       </td>
-                      <td className="p-4">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         {new Date(certificate.issuedAt).toLocaleDateString('uz-UZ', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'
                         })}
                       </td>
-                      <td className="p-4">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex justify-end gap-2">
                           {certificate.pdfUrl && (
                             <a
                               href={certificate.pdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                               title="Ko'rish"
                             >
                               <EditIcon className="size-5" />
@@ -152,10 +166,10 @@ export default function CertificatesPage() {
                           )}
                           <button
                             onClick={() => handleDownload(certificate.certificateNo)}
-                            className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
+                            className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                             title="Yuklab olish"
                           >
-                            <DownloadIcon className="size-5" />
+                            <DownloadIcon className="size-5 fill-blue-600 dark:fill-blue-400" />
                           </button>
                         </div>
                       </td>
@@ -167,24 +181,26 @@ export default function CertificatesPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-4">
-                <button
+              <div className="flex items-center justify-center gap-2 mt-6 px-6 py-4">
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border rounded disabled:opacity-50 dark:border-gray-700"
                 >
                   Oldingi
-                </button>
-                <span className="px-4 py-2">
+                </Button>
+                <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                   {currentPage} / {totalPages}
                 </span>
-                <button
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 border rounded disabled:opacity-50 dark:border-gray-700"
                 >
                   Keyingi
-                </button>
+                </Button>
               </div>
             )}
           </ComponentCard>

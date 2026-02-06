@@ -6,6 +6,20 @@ import axios, {
 
 const baseURL = import.meta.env.VITE_BASE_URL ?? "https://api.example.com";
 
+// Helper to get full image URL
+export const getImageUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  // If it's already a full URL, return as is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  // Remove /api/v1 from baseURL and append the path
+  const serverBase = baseURL.replace('/api/v1', '');
+  // Ensure path starts with /
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${serverBase}${normalizedPath}`;
+};
+
 const axiosClient: AxiosInstance = axios.create({
   baseURL,
   headers: {

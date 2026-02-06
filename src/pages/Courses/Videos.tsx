@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosClient from '../../service/axios.service';
+import axiosClient, { getImageUrl } from '../../service/axios.service';
 import { toast } from 'react-toastify';
 import PageMeta from '../../components/common/PageMeta';
 import { EditIcon, DeleteIcon, ChatIcon } from '../../icons';
@@ -277,7 +277,7 @@ const VideosPage = () => {
                                       <div className="flex items-center">
                                         {video.thumbnail && (
                                           <img
-                                            src={video.thumbnail.startsWith('http') ? video.thumbnail : `${import.meta.env.VITE_STATIC_PATH}${video.thumbnail}`}
+                                            src={getImageUrl(video.thumbnail) || video.thumbnail}
                                             alt={video.title}
                                             className="h-12 w-20 rounded object-cover mr-3"
                                           />

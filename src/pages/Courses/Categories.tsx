@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
-import axiosClient from '../../service/axios.service';
+import axiosClient, { getImageUrl } from '../../service/axios.service';
 import { toast } from 'react-toastify';
 import PageMeta from '../../components/common/PageMeta';
-import { EditIcon, DeleteIcon } from '../../icons';
+import PageBreadcrumb from '../../components/common/PageBreadCrumb';
+import { PencilIcon, DeleteIcon, PlusIcon } from '../../icons';
+import Button from '../../components/ui/button/Button';
+import { Modal } from '../../components/ui/modal';
+import { useModal } from '../../hooks/useModal';
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
+import Label from '../../components/form/Label';
+import Input from '../../components/form/input/InputField';
+import Badge from '../../components/ui/badge/Badge';
+import { LoadSpinner } from '../../components/spinner/load-spinner';
 
 interface Category {
   id: number;
@@ -17,8 +26,10 @@ interface Category {
 const CategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const { isOpen, openModal, closeModal } = useModal();
+  const { isOpen: isDeleteOpen, openModal: openDeleteModal, closeModal: closeDeleteModal } = useModal();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     nameUz: '',
@@ -53,10 +64,10 @@ const CategoriesPage = () => {
         toast.success('Kategoriya yangilandi!');
       } else {
         await axiosClient.post('/category', formData);
-        toast.success("Kategoriya qo'shildi!");
+        toast.success('Kategoriya qo\'shildi!');
       }
       fetchCategories();
-      setShowModal(false);
+      closeModal();
       resetForm();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Xatolik yuz berdi!');
@@ -66,14 +77,20 @@ const CategoriesPage = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
+    setDeletingCategoryId(id);
+    openDeleteModal();
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deletingCategoryId) return;
     try {
-      await axiosClient.delete(`/category/${id}`);
-      toast.success("Kategoriya o'chirildi!");
+      await axiosClient.delete(`/category/${deletingCategoryId}`);
+      toast.success('Kategoriya o\'chirildi!');
       fetchCategories();
-    } catch (error: any) {
-      toast.error("O'chirishda xato!");
+      closeDeleteModal();
+      setDeletingCategoryId(null);
+    } catch (error: unknown) {
+      toast.error('O\'chirishda xato!');
     }
   };
 
@@ -86,7 +103,7 @@ const CategoriesPage = () => {
       image: category.image || '',
       isActive: category.isActive,
     });
-    setShowModal(true);
+    openModal();
   };
 
   const resetForm = () => {
@@ -102,182 +119,199 @@ const CategoriesPage = () => {
 
   return (
     <>
-      <PageMeta title="Kategoriyalar" />
+      <PageMeta title="Kategoriyalar" description="Kurslar kategoriyalarini boshqarish" />
+      <PageBreadcrumb pageTitle="Kategoriyalar" />
+      
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Kategoriyalar</h1>
-          <button
+          <Button
+            size="sm"
+            variant="primary"
+            startIcon={<PlusIcon className="size-5 fill-white" />}
             onClick={() => {
               resetForm();
-              setShowModal(true);
+              openModal();
             }}
-            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
           >
-            + Yangi Kategoriya
-          </button>
+            Qo'shish
+          </Button>
         </div>
 
-        {loading && <div className="text-center py-4">Yuklanmoqda...</div>}
+        {loading && (
+          <div className="min-h-[300px] flex justify-center items-center">
+            <LoadSpinner />
+          </div>
+        )}
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Nom (EN)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Nom (UZ)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Rasm
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Holat
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Amallar
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {categories.map((category) => (
-                <tr key={category.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {category.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {category.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {category.nameUz}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {category.image && (
-                      <img
-                        src={category.image.startsWith('http') ? category.image : `${import.meta.env.VITE_STATIC_PATH}${category.image}`}
-                        alt={category.name}
-                        className="h-10 w-10 rounded object-cover"
-                      />
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        category.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+            >
+              {category.image && (
+                <div className="relative">
+                  <img
+                    src={getImageUrl(category.image) || category.image}
+                    alt={category.name}
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute top-2 right-2">
+                    <Badge size="sm" color={category.isActive ? 'success' : 'error'}>
                       {category.isActive ? 'Faol' : 'Nofaol'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(category)}
-                        className="p-2 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                        title="Tahrirlash"
-                      >
-                        <EditIcon className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category.id)}
-                        className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="O'chirish"
-                      >
-                        <DeleteIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </Badge>
+                  </div>
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  {category.icon && (
+                    <img
+                      src={category.icon}
+                      alt="icon"
+                      className="w-10 h-10 object-contain"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {category.nameUz}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {category.name}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ID: #{category.id}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="mini"
+                      variant="outline"
+                      onClick={() => handleEdit(category)}
+                    >
+                      <PencilIcon className="size-4 fill-black dark:fill-white" />
+                    </Button>
+                    <Button
+                      size="mini"
+                      variant="outline"
+                      onClick={() => handleDelete(category.id)}
+                    >
+                      <DeleteIcon className="size-4 fill-black dark:fill-white" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">
+        {!loading && categories.length === 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">Hozircha kategoriyalar yo&apos;q</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
+      <Modal isOpen={isOpen} onClose={() => { closeModal(); resetForm(); }} className="max-w-[600px] m-4">
+          <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
+            <div className="px-2 pr-14">
+              <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
                 {editingCategory ? 'Kategoriyani Tahrirlash' : 'Yangi Kategoriya'}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              </h4>
+              <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+                Kategoriya ma'lumotlarini kiriting
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="flex flex-col">
+              <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nom (EN)</label>
-                  <input
+                  <Label>Nom (EN)</Label>
+                  <Input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nom (UZ)</label>
-                  <input
+                  <Label>Nom (UZ)</Label>
+                  <Input
                     type="text"
                     value={formData.nameUz}
                     onChange={(e) => setFormData({ ...formData, nameUz: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Icon URL</label>
-                  <input
+                  <Label>Icon URL</Label>
+                  <Input
                     type="text"
                     value={formData.icon}
                     onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Rasm URL</label>
-                  <input
+                  <Label>Rasm URL</Label>
+                  <Input
                     type="text"
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
                   />
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="mr-2"
+                    className="w-4 h-4"
                   />
-                  <label className="text-sm font-medium">Faol</label>
+                  <Label>Faol</Label>
                 </div>
-                <div className="flex justify-end space-x-2 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      resetForm();
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                  >
-                    Bekor qilish
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 disabled:opacity-50"
-                  >
-                    {loading ? 'Saqlanmoqda...' : 'Saqlash'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    closeModal();
+                    resetForm();
+                  }}
+                >
+                  Bekor qilish
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="primary"
+                  disabled={loading}
+                >
+                  {loading ? 'Saqlanmoqda...' : 'Saqlash'}
+                </Button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        title="Kategoriyani o&apos;chirish"
+        message="Ushbu kategoriyani o&apos;chirmoqchimisiz?"
+        itemName={deletingCategoryId ? `Kategoriya #${deletingCategoryId}` : undefined}
+      />
     </>
   );
 };

@@ -41,7 +41,7 @@ export default function TestResultsPage() {
   const itemsPerPage = 15;
 
   const fetchResults = useCallback(() => {
-    return axiosClient.get('/tests/results/my').then(res => res.data);
+    return axiosClient.get('/tests/results/all').then(res => res.data);
   }, []);
 
   const { data, isLoading, refetch } = useFetchWithLoader({
@@ -126,7 +126,7 @@ export default function TestResultsPage() {
                     placeholder="Qidirish..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+                    className="h-11 pl-10 pr-4 rounded-lg border text-sm bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:bg-gray-900 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800 focus:outline-hidden"
                   />
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
                 </div>
@@ -135,60 +135,79 @@ export default function TestResultsPage() {
           >
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b dark:border-gray-700">
-                    <th className="text-left p-4">ID</th>
-                    <th className="text-left p-4">Talaba</th>
-                    <th className="text-left p-4">Test</th>
-                    <th className="text-left p-4">Ball</th>
-                    <th className="text-left p-4">To'g'ri/Jami</th>
-                    <th className="text-left p-4">Status</th>
-                    <th className="text-left p-4">Sana</th>
-                    <th className="text-right p-4">Harakatlar</th>
+                <thead className="bg-gray-50 dark:bg-gray-800/50">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Talaba
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Test
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Ball
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      To'g'ri/Jami
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Sana
+                    </th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Harakatlar
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                   {currentItems.map((result) => (
-                    <tr key={result.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="p-4">{result.id}</td>
-                      <td className="p-4">
+                    <tr key={result.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {result.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         {result.user?.firstName || result.user?.lastName 
                           ? `${result.user.firstName || ''} ${result.user.lastName || ''}`.trim()
                           : `User #${result.userId}`
                         }
                       </td>
-                      <td className="p-4">{result.test?.title || `Test #${result.testId}`}</td>
-                      <td className="p-4">
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                        {result.test?.title || `Test #${result.testId}`}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`font-bold ${
-                          result.score >= 70 ? 'text-green-600' : 'text-red-600'
+                          result.score >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
                           {result.score}%
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         {result.correctAnswers} / {result.totalQuestions}
                       </td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-xs ${
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
                           result.isPassed
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
                           {result.isPassed ? 'O\'tdi' : 'O\'tmadi'}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         {new Date(result.completedAt).toLocaleDateString('uz-UZ')}
                       </td>
-                      <td className="p-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleDelete(result.id)}
-                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded"
-                          >
-                            <DeleteIcon className="size-5 fill-red-500" />
-                          </button>
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <button
+                          onClick={() => handleDelete(result.id)}
+                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          title="O'chirish"
+                        >
+                          <DeleteIcon className="size-5 fill-red-500" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -198,24 +217,26 @@ export default function TestResultsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-4">
-                <button
+              <div className="flex items-center justify-center gap-2 mt-6 px-6 py-4">
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border rounded disabled:opacity-50 dark:border-gray-700"
                 >
                   Oldingi
-                </button>
-                <span className="px-4 py-2">
+                </Button>
+                <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                   {currentPage} / {totalPages}
                 </span>
-                <button
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 border rounded disabled:opacity-50 dark:border-gray-700"
                 >
                   Keyingi
-                </button>
+                </Button>
               </div>
             )}
           </ComponentCard>

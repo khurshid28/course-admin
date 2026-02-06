@@ -39,11 +39,8 @@ const navItems: NavItem[] = [
     icon: <VideoIcon className="fill-current" />,
     name: "Kurslar",
     subItems: [
-      { name: "Barcha Kurslar", path: "/courses", pro: false },
+      { name: "Kurslar", path: "/courses", pro: false },
       { name: "Kategoriyalar", path: "/categories", pro: false },
-      { name: "Videolar", path: "/videos", pro: false },
-      { name: "Bo'limlar", path: "/course-sections", pro: false },
-      { name: "FAQs", path: "/faqs", pro: false },
     ],
   },
   {
@@ -81,24 +78,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <ChatIcon className="fill-current" />,
-    name: "Fikrlar",
-    subItems: [
-      { name: "Izohlar", path: "/comments", pro: false },
-    ],
-  },
-  {
     icon: <MegaphoneIcon className="fill-current" />,
     name: "Yangiliklar",
     subItems: [
       { name: "Barcha Yangiliklar", path: "/news", pro: false },
       { name: "Yangi E'lon", path: "/news/create", pro: false },
     ],
-  },
-  {
-    icon: <MailIcon className="fill-current" />,
-    name: "Bildirishnomalar",
-    path: "/notifications",
   },
 ];
 

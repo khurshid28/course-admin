@@ -29,7 +29,7 @@ import TestResultsPage from "./pages/Test/TestResults";
 import CertificatesPage from "./pages/Test/Certificates";
 
 // Course Pages
-import CoursesPage from "./pages/Courses/Courses";
+import CoursesPage from "./pages/Courses/CoursesMain";
 import CategoriesPage from "./pages/Courses/Categories";
 import VideosPage from "./pages/Courses/Videos";
 import CourseSectionsPage from "./pages/Courses/CourseSections";
@@ -68,7 +68,6 @@ export default function App() {
             {/* Course Management */}
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/videos" element={<VideosPage />} />
             <Route path="/course-sections" element={<CourseSectionsPage />} />
             <Route path="/faqs" element={<FAQsPage />} />
 

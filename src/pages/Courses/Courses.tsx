@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosClient from '../../service/axios.service';
+import axiosClient, { getImageUrl } from '../../service/axios.service';
 import { toast } from 'react-toastify';
 import PageMeta from '../../components/common/PageMeta';
 import { EditIcon, DeleteIcon } from '../../icons';
@@ -110,7 +110,7 @@ const CoursesPage = () => {
                     <div className="flex items-center">
                       {course.thumbnail && (
                         <img
-                          src={course.thumbnail.startsWith('http') ? course.thumbnail : `${import.meta.env.VITE_STATIC_PATH}${course.thumbnail}`}
+                          src={getImageUrl(course.thumbnail) || course.thumbnail}
                           alt={course.title}
                           className="h-10 w-16 rounded object-cover mr-3"
                         />

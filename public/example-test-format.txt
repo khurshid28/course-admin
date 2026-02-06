@@ -1,0 +1,51 @@
+TEST NAMUNASI - WORD FAYLIDA QUYIDAGICHA YOZING
+=====================================================
+
+Diqqat: Har bir savol raqam bilan boshlanishi kerak (1., 2., 3. ...)
+Har bir javob variant harfi bilan boshlanishi kerak (A) B) C) D) yoki a) b) c) d))
+To'g'ri javob oldida + belgisi yoki * belgisi qo'ying
+
+
+FORMATNING TO'G'RI USULI:
+---------------------------
+
+1. O'zbekiston Respublikasi Konstitutsiyasi qachon qabul qilingan?
+a) 1991-yil 1-sentabr
++b) 1992-yil 8-dekabr
+c) 1993-yil 1-yanvar  
+d) 1990-yil 20-iyun
+
+2. O'zbekiston Respublikasi Oliy Majlisi necha palatadan iborat?
+a) Bir palatadan
+*b) Ikki palatadan
+c) Uch palatadan
+d) To'rt palatadan
+
+3. O'zbekiston Respublikasi birinchi Prezidenti kim edi?
+a) Shavkat Mirziyoyev
+b) Abdulhashim Mutalov
++c) Islom Karimov
+d) Sharaf Rashidov
+
+4. O'zbekistonning poytaxti qaysi shahar?
+*a) Toshkent
+b) Samarqand
+c) Buxoro
+d) Xiva
+
+
+MUHIM QOIDALAR:
+---------------
+✓ Har bir savol yangi qatordan boshlanishi kerak
+✓ Savollar raqam + nuqta bilan boshlanadi (1. 2. 3. ...)
+✓ Javob variantlari harf + qavslar bilan boshlanadi (a) b) c) d))
+✓ To'g'ri javob oldiga + yoki * belgisi qo'ying
+✓ Har bir test 4 ta javob variantiga ega bo'lishi kerak
+✓ Faqat bitta to'g'ri javob bo'lishi kerak
+
+NOTO'G'RI FORMATLAR (Ishlatmang):
+---------------------------------
+- Raqamsiz savollar: "Bu qaysi davlat?"
+- Harfsiz javoblar: "Toshkent", "Samarqand"
+- To'g'ri javob belgisisiz
+- 4 tadan kam yoki ko'p javob variantlari

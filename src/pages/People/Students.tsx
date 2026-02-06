@@ -1,8 +1,9 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageMeta from "../../components/common/PageMeta";
-import { BoxIcon, PlusIcon } from "../../icons";
+import { BoxIcon, PlusIcon, VideoIcon } from "../../icons";
 import Button from "../../components/ui/button/Button";
+import Badge from "../../components/ui/badge/Badge";
 import { useModal } from "../../hooks/useModal";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
@@ -11,20 +12,41 @@ import { useCallback, useState } from "react";
 import StudentsTable from "../../components/tables/people/studentsTable";
 import Select from "../../components/form/Select";
 import FileInput from "../../components/form/input/FileInput";
-import axiosClient from "../../service/axios.service";
+import axiosClient, { getImageUrl } from "../../service/axios.service";
 import { useFetchWithLoader } from "../../hooks/useFetchWithLoader";
 import { LoadSpinner } from "../../components/spinner/load-spinner";
 import { Options } from "flatpickr/dist/types/options";
 import { toast } from "react-toastify";
+import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
+import { UserIcon } from "../../icons";
+
 export interface Student {
-  id? :number;
-  name: string;
+  id?: number;
+  firstName?: string;
+  surname?: string;
   phone: string;
-  group_id?: number
-  password?: string
+  email?: string;
+  avatar?: string;
+  balance?: number;
+  purchased?: boolean;
+  createdAt?: string;
+  _count?: {
+    enrollments: number;
+  };
+  enrollments?: {
+    course: {
+      id: number;
+      title: string;
+      categoryId: number;
+    };
+  }[];
 }
 export default function StudentsPage() {
   const { isOpen, openModal, closeModal } = useModal();
+  const { isOpen: isViewOpen, openModal: openViewModal, closeModal: closeViewModal } = useModal();
+  const { isOpen: isDeleteOpen, openModal: openDeleteModal, closeModal: closeDeleteModal } = useModal();
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+  const [deletingStudentId, setDeletingStudentId] = useState<number | null>(null);
   // const handleAdding = () => {
   //   // Handle save logic here
 
@@ -34,28 +56,36 @@ export default function StudentsPage() {
   //   setStudent(emptyStudent);
   // };
   let emptyStudent: Student = {
-    name: "",
+    firstName: "",
+    surname: "",
     phone: "",
-    
-
+    email: "",
   };
 
 
   let [Student, setStudent] = useState<Student>(emptyStudent);
 
-  let [options, setOptions] = useState<HTMLOptionElement[]>([]);
-
-  let [optionValue, setoptionValue] = useState("");
-  let [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("");
-
-  const handleSelectChange = (value: string) => {
-    setoptionValue(value);
-  };
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      console.log("Selected file:", file.name);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await axiosClient.post('/upload/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setStudent({ ...student, avatar: response.data.url });
+        toast.success('Rasm yuklandi');
+      } catch (error) {
+        console.error('Image upload error:', error);
+        toast.error('Rasm yuklanmadi');
+      }
     }
+  };
+
+  const handleViewStudent = (student: Student) => {
+    setViewingStudent(student);
+    openViewModal();
   };
 
   const handleEditStudent = (student: Student) => {
@@ -63,11 +93,19 @@ export default function StudentsPage() {
     openModal();
   };
 
-  const handleDeleteStudent = async (id: number) => {
+  const handleDeleteClick = (id: number) => {
+    setDeletingStudentId(id);
+    openDeleteModal();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingStudentId) return;
     try {
-      await axiosClient.delete(`/student/${id}`);
+      await axiosClient.delete(`/user/${deletingStudentId}`);
       toast.success('Student o\'chirildi');
       await refetch();
+      closeDeleteModal();
+      setDeletingStudentId(null);
     } catch (error) {
       console.error('Delete Student error:', error);
       toast.error('O\'chirishda xatolik');
@@ -81,11 +119,11 @@ export default function StudentsPage() {
     try {
       if (Student.id) {
         // Edit existing student
-        await axiosClient.put(`/student/${Student.id}`, { ...Student });
+        await axiosClient.put(`/user/${Student.id}`, { ...Student });
         toast.success('Student muvaffaqiyatli yangilandi');
       } else {
         // Create new student
-        await axiosClient.post('/student', { ...Student });
+        await axiosClient.post('/user', { ...Student });
         toast.success('Student muvaffaqiyatli yaratildi');
       }
       await refetch();
@@ -102,31 +140,13 @@ export default function StudentsPage() {
 
 
   const fetchStudents = useCallback(() => {
-    return axiosClient.get('/student/all').then(res => res.data);
+    return axiosClient.get('/user').then(res => res.data);
   }, []);
 
 
   const { data, isLoading, error, refetch } = useFetchWithLoader({
     fetcher: fetchStudents,
   });
-
-  const fetchGroups = useCallback(() => {
-    return axiosClient.get('/group/all').then(res => res.data);
-  }, []);
-
-  const { data: groups, isLoading: isLoadingGroups, error: errorIsGroups, refetch: refetchGroups } = useFetchWithLoader({
-    fetcher: fetchGroups,
-    onSuccess: useCallback((data: any[]) => {
-      setOptions((data as any[]).map((e, index) => {
-        return new Option(`${e.name}`, `${e.id}`)
-      }));
-      
-    }, [])
-  }
-
-
-
-  );
 
   return (
     <>
@@ -147,34 +167,26 @@ export default function StudentsPage() {
           title="Studentlar jadvali"
           action={
             <>
-              <div className="flex gap-3 items-center">
-                <Select
-                  options={[new Option('Barcha guruhlar', ''), ...options]}
-                  defaultValue={selectedGroupFilter}
-                  onChange={(value) => setSelectedGroupFilter(value)}
-                  className="dark:bg-dark-900 min-w-[200px]"
-                />
-                <Button
-                  size="sm"
-                  variant="primary"
-                  startIcon={<PlusIcon className="size-5 fill-white" />}
-                  onClick={() => {
-                    setStudent(emptyStudent)
-                    openModal()
-                  }}
-                >
-                  Qo'shish
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant="primary"
+                startIcon={<PlusIcon className="size-5 fill-white" />}
+                onClick={() => {
+                  setStudent(emptyStudent)
+                  openModal()
+                }}
+              >
+                Qo'shish
+              </Button>
             </>
           }
         >
           <StudentsTable 
-            data={selectedGroupFilter ? data.filter((s: any) => s.group_id?.toString() === selectedGroupFilter) : data} 
-            refetch={refetch} 
-            groups={options} 
+            data={data} 
+            refetch={refetch}
+            onView={handleViewStudent} 
             onEdit={handleEditStudent} 
-            onDelete={handleDeleteStudent} 
+            onDelete={handleDeleteClick} 
           />
         </ComponentCard>}
       </div>
@@ -188,23 +200,40 @@ export default function StudentsPage() {
               Yangi student qo'shish uchun barcha ma'lumotlarni kiriting.
             </p>
           </div>
-          <form className="flex flex-col">
+          <form className="flex flex-col" onSubmit={createStudent}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
-                  <Label>To'liq ismi</Label>
+                  <Label>Ism</Label>
                   <Input
                     type="text"
-                    value={Student.name}
+                    value={Student.firstName || ''}
                     onChange={(e) =>
                       setStudent({
                         ...Student,
-                        name: e.target.value,
+                        firstName: e.target.value,
                       })
                     }
+                    placeholder="Ism"
+                    required
                   />
                 </div>
 
+                <div>
+                  <Label>Familiya</Label>
+                  <Input
+                    type="text"
+                    value={Student.surname || ''}
+                    onChange={(e) =>
+                      setStudent({
+                        ...Student,
+                        surname: e.target.value,
+                      })
+                    }
+                    placeholder="Familiya"
+                    required
+                  />
+                </div>
 
                 <div>
                   <Label>Telefon raqami</Label>
@@ -217,61 +246,153 @@ export default function StudentsPage() {
                         phone: e.target.value,
                       })
                     }
+                    placeholder="901234567"
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label>Parol</Label>
+                  <Label>Email</Label>
                   <Input
-                    type="text"
-                    value={Student.password || ''}
+                    type="email"
+                    value={Student.email || ''}
                     onChange={(e) =>
                       setStudent({
                         ...Student,
-                        password: e.target.value,
+                        email: e.target.value,
                       })
                     }
-                  />
-                </div>
-
-
-
-
-                <div>
-                  <Label>Guruh</Label>
-                  <Select
-                    options={options}
-                    placeholder="Guruhni tanlang"
-                    defaultValue={Student.group_id?.toString() || ''}
-                    onChange={(e)=>{
-                      setStudent({
-                        ...Student,
-                        group_id :+e
-                      })
-                    }}
-                    className="dark:bg-dark-900"
-                  />
-                </div>
-                <div>
-                  <Label>Rasm</Label>
-                  <FileInput
-                    onChange={handleFileChange}
-                    className="custom-class"
+                    placeholder="email@example.com"
                   />
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
-                Yopish
+              <Button type="button" size="sm" variant="outline" onClick={closeModal}>
+                Bekor qilish
               </Button>
-              <Button size="sm" onClick={createStudent}>
+              <Button type="submit" size="sm" variant="primary">
                 Saqlash
               </Button>
             </div>
           </form>
         </div>
       </Modal>
+
+      {/* View Modal */}
+      <Modal isOpen={isViewOpen} onClose={closeViewModal} className="max-w-[700px] m-4">
+        <div className="relative w-full p-6 bg-white rounded-3xl dark:bg-gray-900">
+          <div className="px-2 pr-14">
+            <h4 className="mb-4 text-2xl font-semibold text-gray-800 dark:text-white/90">
+              Student ma'lumotlari
+            </h4>
+          </div>
+          {viewingStudent && (
+            <div className="px-2 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">ID</p>
+                  <p className="text-base font-medium text-gray-800 dark:text-white">#{viewingStudent.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Holati</p>
+                  <Badge size="sm" color={viewingStudent.purchased ? "success" : "warning"}>
+                    {viewingStudent.purchased ? 'Sotib olgan' : 'Sotib olmagan'}
+                  </Badge>
+                </div>
+                {viewingStudent.createdAt && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Ro'yxatdan o'tgan</p>
+                    <p className="text-base font-medium text-gray-800 dark:text-white">
+                      {new Date(viewingStudent.createdAt).toLocaleDateString('uz-UZ')}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {viewingStudent.avatar && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Rasm</p>
+                  <img 
+                    src={getImageUrl(viewingStudent.avatar) || '/images/user/user-17.jpg'} 
+                    alt={viewingStudent.firstName} 
+                    className="w-24 h-24 object-cover rounded-lg" 
+                  />
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">To'liq ismi</p>
+                <p className="text-base font-medium text-gray-800 dark:text-white">
+                  {viewingStudent.firstName} {viewingStudent.surname}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Telefon</p>
+                <p className="text-base font-medium text-gray-800 dark:text-white">{viewingStudent.phone}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                <p className="text-base font-medium text-gray-800 dark:text-white">{viewingStudent.email || '-'}</p>
+              </div>
+              {viewingStudent.balance !== undefined && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Balans</p>
+                  <p className="text-base font-medium text-gray-800 dark:text-white">{viewingStudent.balance} so'm</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Kurslar soni</p>
+                <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <VideoIcon className="size-5 fill-blue-500" />
+                  <span className="text-lg font-semibold text-gray-800 dark:text-white">
+                    {viewingStudent._count?.enrollments || 0} ta kurs
+                  </span>
+                </div>
+              </div>
+
+              {viewingStudent.enrollments && viewingStudent.enrollments.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Kurslar ro'yxati</p>
+                  <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                    {viewingStudent.enrollments.map((enrollment, index) => (
+                      <div 
+                        key={enrollment.course.id} 
+                        className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                          <span className="text-sm font-semibold text-white">#{index + 1}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                            {enrollment.course.title}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            ID: {enrollment.course.id}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex justify-end gap-3 px-2 mt-6">
+            <Button size="sm" variant="outline" onClick={closeViewModal}>
+              Yopish
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        title="Studentni o'chirish"
+        message="Ushbu studentni o'chirmoqchimisiz?"
+        itemName={deletingStudentId ? `Student #${deletingStudentId}` : undefined}
+      />
     </>
   );
 }

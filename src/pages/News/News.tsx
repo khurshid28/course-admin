@@ -1,13 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import axiosClient from '../../service/axios.service';
+import axiosClient, { getImageUrl } from '../../service/axios.service';
 import { useFetchWithLoader } from '../../hooks/useFetchWithLoader';
 import PageBreadcrumb from '../../components/common/PageBreadCrumb';
 import PageMeta from '../../components/common/PageMeta';
 import ComponentCard from '../../components/common/ComponentCard';
-import { SearchIcon, DeleteIcon, EditIcon } from '../../icons';
+import { SearchIcon, DeleteIcon, PencilIcon } from '../../icons';
 import { LoadSpinner } from '../../components/spinner/load-spinner';
 import { Link } from 'react-router';
+import Button from '../../components/ui/button/Button';
 
 interface News {
   id: number;
@@ -126,7 +127,7 @@ export default function NewsPage() {
                   <div className="relative">
                     {item.image ? (
                       <img
-                        src={item.image.startsWith('http') ? item.image : `${import.meta.env.VITE_STATIC_PATH}${item.image}`}
+                        src={getImageUrl(item.image) || item.image}
                         alt={item.title}
                         className="w-full h-48 object-cover"
                         onError={(e) => {
@@ -177,18 +178,18 @@ export default function NewsPage() {
                         {item.isPublished ? 'Yashirish' : 'Nashr qilish'}
                       </button>
                       <div className="flex gap-2">
-                        <Link
-                          to={`/news/edit/${item.id}`}
-                          className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-colors"
-                        >
-                          <EditIcon className="size-5 fill-blue-500" />
+                        <Link to={`/news/edit/${item.id}`}>
+                          <Button size="mini" variant="outline">
+                            <PencilIcon className="size-4 fill-black dark:fill-white" />
+                          </Button>
                         </Link>
-                        <button
+                        <Button
+                          size="mini"
+                          variant="outline"
                           onClick={() => handleDelete(item.id)}
-                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
                         >
-                          <DeleteIcon className="size-5 fill-red-500" />
-                        </button>
+                          <DeleteIcon className="size-4 fill-black dark:fill-white" />
+                        </Button>
                       </div>
                     </div>
                   </div>

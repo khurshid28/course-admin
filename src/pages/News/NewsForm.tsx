@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router';
-import axiosClient from '../../service/axios.service';
+import axiosClient, { getImageUrl } from '../../service/axios.service';
 import PageBreadcrumb from '../../components/common/PageBreadCrumb';
 import PageMeta from '../../components/common/PageMeta';
 import ComponentCard from '../../components/common/ComponentCard';
@@ -138,7 +138,7 @@ export default function NewsFormPage() {
             {formData.image && (
               <div className="mt-3">
                 <img
-                  src={formData.image.startsWith('http') ? formData.image : `${import.meta.env.VITE_STATIC_PATH}${formData.image}`}
+                  src={getImageUrl(formData.image) || formData.image}
                   alt="Preview"
                   className="w-64 h-40 object-cover rounded-lg border"
                 />
