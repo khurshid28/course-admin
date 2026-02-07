@@ -167,9 +167,13 @@ export default function CoursesNewPage() {
     setCategoryLoading(true);
     try {
       const response = await axiosClient.get('/category');
-      setCategories(response.data);
+      console.log('Categories loaded (CoursesNew):', response.data);
+      console.log('Categories count:', Array.isArray(response.data) ? response.data.length : 0);
+      setCategories(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
+      console.error('Categories fetch error:', error);
       toast.error('Kategoriyalarni yuklashda xato!');
+      setCategories([]);
     } finally {
       setCategoryLoading(false);
     }
@@ -189,10 +193,14 @@ export default function CoursesNewPage() {
 
   const fetchTeachers = async () => {
     try {
-      const response = await axiosClient.get('/teacher');
-      setTeachers(response.data);
+      const response = await axiosClient.get('/teachers');
+      console.log('Teachers loaded (CoursesNew):', response.data);
+      console.log('Teachers count:', Array.isArray(response.data) ? response.data.length : 0);
+      setTeachers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Teachers fetch error:', error);
+      toast.error('O\'qituvchilarni yuklashda xato!');
+      setTeachers([]);
     }
   };
 
@@ -746,7 +754,7 @@ export default function CoursesNewPage() {
             </p>
           </div>
           <form onSubmit={handleCategorySubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
+            <div className="custom-scrollbar max-h-[60vh] overflow-y-auto px-2 pb-3 space-y-4">
               <div>
                 <Label>Nom (EN)</Label>
                 <Input
@@ -815,7 +823,7 @@ export default function CoursesNewPage() {
             </p>
           </div>
           <form onSubmit={handleCourseSubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
+            <div className="custom-scrollbar max-h-[60vh] overflow-y-auto px-2 pb-3 space-y-4">
               <div>
                 <Label>Kurs nomi</Label>
                 <Input
@@ -848,10 +856,11 @@ export default function CoursesNewPage() {
                   value={courseForm.teacherId.toString()}
                   onChange={(e) => setCourseForm({ ...courseForm, teacherId: parseInt(e.target.value) })}
                   required
+                  style={{ colorScheme: 'light dark' }}
                 >
-                  <option value="">Tanlang...</option>
+                  <option value="" style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>Tanlang...</option>
                   {teachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
+                    <option key={teacher.id} value={teacher.id} style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>
                       {teacher.name}
                     </option>
                   ))}
@@ -863,10 +872,11 @@ export default function CoursesNewPage() {
                   value={courseForm.categoryId.toString()}
                   onChange={(e) => setCourseForm({ ...courseForm, categoryId: parseInt(e.target.value) })}
                   required
+                  style={{ colorScheme: 'light dark' }}
                 >
-                  <option value="">Tanlang...</option>
+                  <option value="" style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>Tanlang...</option>
                   {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
+                    <option key={category.id} value={category.id} style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>
                       {category.nameUz}
                     </option>
                   ))}
@@ -1033,7 +1043,7 @@ export default function CoursesNewPage() {
             </h4>
           </div>
           <form onSubmit={handleSectionSubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
+            <div className="custom-scrollbar max-h-[60vh] overflow-y-auto px-2 pb-3 space-y-4">
               <div>
                 <Label>Bo'lim nomi</Label>
                 <Input
@@ -1082,7 +1092,7 @@ export default function CoursesNewPage() {
             </h4>
           </div>
           <form onSubmit={handleVideoSubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
+            <div className="custom-scrollbar max-h-[60vh] overflow-y-auto px-2 pb-3 space-y-4">
               <div>
                 <Label>Video nomi</Label>
                 <Input

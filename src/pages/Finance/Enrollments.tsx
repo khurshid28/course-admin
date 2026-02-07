@@ -15,7 +15,28 @@ interface Enrollment {
   enrolledAt: string;
   expiresAt?: string;
   user: { id: number; firstName?: string; surname?: string; phone: string };
-  course: { id: number; title: string; thumbnail?: string };
+  course: { 
+    id: number; 
+    title: string; 
+    thumbnail?: string;
+    banners?: Array<{
+      id: number;
+      image: string;
+      title: string;
+    }>;
+  };
+  payment?: {
+    id: number;
+    amount: number;
+    originalAmount?: number;
+    discount?: number;
+    subscriptionDuration?: string;
+    promoCode?: {
+      id: number;
+      code: string;
+      discount: number;
+    };
+  } | null;
 }
 
 const EnrollmentsPage = () => {
@@ -38,6 +59,13 @@ const EnrollmentsPage = () => {
         url += `?isActive=${filter === 'ACTIVE'}`;
       }
       const response = await axiosClient.get(url);
+      console.log('Enrollment data:', response.data);
+      if (response.data.length > 0) {
+        console.log('First enrollment:', response.data[0]);
+        console.log('- Course:', response.data[0].course);
+        console.log('- Payment:', response.data[0].payment);
+        console.log('- Subscription Duration:', response.data[0].subscriptionDuration);
+      }
       setEnrollments(response.data);
     } catch (error: any) {
       toast.error('Obunalarni yuklashda xato!');
@@ -56,6 +84,10 @@ const EnrollmentsPage = () => {
     } catch (error: any) {
       toast.error('Xatolik yuz berdi!');
     }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('uz-UZ').format(price) + ' so\'m';
   };
 
   const getDurationText = (duration: string) => {
@@ -150,6 +182,12 @@ const EnrollmentsPage = () => {
                     Davomiyligi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Narx
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Promo kod
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Amal qilish muddati
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -180,16 +218,28 @@ const EnrollmentsPage = () => {
                       </td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                       <div className="flex items-center gap-3">
-                        {enrollment.course?.thumbnail && (
+                        {(enrollment.course?.banners?.[0]?.image || enrollment.course?.thumbnail) ? (
                           <img
-                            src={getImageUrl(enrollment.course.thumbnail)}
+                            src={getImageUrl(enrollment.course.banners?.[0]?.image || enrollment.course.thumbnail || '')}
                             alt={enrollment.course.title}
-                            className="h-12 w-16 rounded object-cover flex-shrink-0"
+                            className="h-12 w-16 rounded object-cover flex-shrink-0 bg-gray-100 dark:bg-gray-700"
+                            onLoad={() => {
+                              console.log('Image loaded successfully for:', enrollment.course.title);
+                            }}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
+                              console.error('Image failed to load for course:', enrollment.course.title);
+                              console.error('Banner image:', enrollment.course.banners?.[0]?.image);
+                              console.error('Thumbnail:', enrollment.course.thumbnail);
+                              console.error('Attempted URL:', target.src);
+                              target.onerror = null;
+                              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e5e7eb"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';
                             }}
                           />
+                        ) : (
+                          <div className="h-12 w-16 rounded bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            {enrollment.course?.title?.substring(0, 2).toUpperCase() || 'NA'}
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{enrollment.course?.title}</p>
@@ -199,6 +249,32 @@ const EnrollmentsPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {getDurationText(enrollment.subscriptionDuration)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {enrollment.payment ? (
+                        <div>
+                          <div className="font-semibold text-green-600 dark:text-green-400">
+                            {formatPrice(Number(enrollment.payment.amount))}
+                          </div>
+                          {enrollment.payment.originalAmount && Number(enrollment.payment.originalAmount) > Number(enrollment.payment.amount) && (
+                            <div className="text-xs text-gray-500 line-through">
+                              {formatPrice(Number(enrollment.payment.originalAmount))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 dark:text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {enrollment.payment?.promoCode ? (
+                        <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                          <span className="text-xs font-mono font-semibold">{enrollment.payment.promoCode.code}</span>
+                          <span className="ml-1 text-xs">(-{enrollment.payment.promoCode.discount}%)</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500 text-xs">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {enrollment.expiresAt ? (
@@ -299,16 +375,31 @@ const EnrollmentsPage = () => {
                 <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   {viewingEnrollment.course && (
                     <>
-                      {viewingEnrollment.course.thumbnail && (
+                      {/* Banner image if available, otherwise thumbnail */}
+                      {(viewingEnrollment.course.banners?.[0]?.image || viewingEnrollment.course.thumbnail) ? (
                         <img
-                          src={getImageUrl(viewingEnrollment.course.thumbnail)}
+                          src={getImageUrl(
+                            viewingEnrollment.course.banners?.[0]?.image || viewingEnrollment.course.thumbnail || ''
+                          )}
                           alt={viewingEnrollment.course.title}
                           className="w-full h-40 object-cover rounded-lg mb-3"
+                          onLoad={() => {
+                            console.log('Modal image loaded for:', viewingEnrollment.course.title);
+                          }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/images/product/product-01.png';
+                            console.error('Modal image failed for:', viewingEnrollment.course.title);
+                            console.error('Banner:', viewingEnrollment.course.banners?.[0]?.image);
+                            console.error('Thumbnail:', viewingEnrollment.course.thumbnail);
+                            console.error('URL:', target.src);
+                            target.onerror = null;
+                            target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e5e7eb"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';
                           }}
                         />
+                      ) : (
+                        <div className="w-full h-40 rounded-lg mb-3 bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-3xl font-bold">
+                          {viewingEnrollment.course.title?.substring(0, 2).toUpperCase() || 'NA'}
+                        </div>
                       )}
                       <p className="text-base font-medium text-gray-800 dark:text-white">
                         {viewingEnrollment.course.title}
@@ -360,6 +451,46 @@ const EnrollmentsPage = () => {
                       }
                       return null;
                     })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Information */}
+              {viewingEnrollment.payment && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">To'lov ma'lumotlari</p>
+                  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">To'lov summasi:</span>
+                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                        {formatPrice(Number(viewingEnrollment.payment.amount))}
+                      </span>
+                    </div>
+                    {viewingEnrollment.payment.originalAmount && Number(viewingEnrollment.payment.originalAmount) > Number(viewingEnrollment.payment.amount) && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Asl narx:</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                          {formatPrice(Number(viewingEnrollment.payment.originalAmount))}
+                        </span>
+                      </div>
+                    )}
+                    {viewingEnrollment.payment.discount && Number(viewingEnrollment.payment.discount) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Chegirma:</span>
+                        <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                          -{formatPrice(Number(viewingEnrollment.payment.discount))}
+                        </span>
+                      </div>
+                    )}
+                    {viewingEnrollment.payment.promoCode && (
+                      <div className="flex justify-between items-center pt-2 border-t border-green-200 dark:border-green-800">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Promo kod:</span>
+                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300">
+                          <span className="text-sm font-mono font-bold">{viewingEnrollment.payment.promoCode.code}</span>
+                          <span className="ml-2 text-xs font-semibold">-{viewingEnrollment.payment.promoCode.discount}%</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

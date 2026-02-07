@@ -2,7 +2,7 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageMeta from "../../components/common/PageMeta";
 
-import { BoxIcon, CheckCircleIcon, DownloadIcon, PlusIcon, EditIcon, DeleteIcon } from "../../icons";
+import { BoxIcon, CheckCircleIcon, DownloadIcon, PlusIcon, PencilIcon, DeleteIcon } from "../../icons";
 import Button from "../../components/ui/button/Button";
 import Badge from "../../components/ui/badge/Badge";
 import { useModal } from "../../hooks/useModal";
@@ -424,7 +424,10 @@ export default function TestsPage() {
   });
 
   const fetchCourses = useCallback(() => {
-    return axiosClient.get("/courses").then((res) => res.data);
+    return axiosClient.get("/course?limit=1000&includeInactive=true").then((res) => {
+      // Backend returns { courses: [...], totalPages, total }
+      return res.data.courses || res.data;
+    });
   }, []);
   
   const { data: courses_data } = useFetchWithLoader({
@@ -535,7 +538,7 @@ export default function TestsPage() {
                       <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                         {test.title}
                       </h3>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Badge size="sm" color="info">
                           {test.course?.title || 'Kurs mavjud emas'}
                         </Badge>
@@ -544,27 +547,29 @@ export default function TestsPage() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        size="mini"
-                        variant="outline"
-                        onClick={() => handleEditTest(test)}
-                      >
-                        <EditIcon className="w-4 h-4 fill-black dark:fill-white" />
-                      </Button>
-                      <Button
-                        size="mini"
-                        variant="outline"
-                        onClick={() => {
-                          if (test.id) {
-                            setPendingDeleteId(test.id);
-                            openDeleteConfirmModal();
-                          }
-                        }}
-                      >
-                        <DeleteIcon className="w-4 h-4 fill-black dark:fill-white" />
-                      </Button>
-                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => handleEditTest(test)}
+                      className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors group"
+                      title="Tahrirlash"
+                    >
+                      <PencilIcon className="size-5 fill-gray-600 dark:fill-gray-400 group-hover:fill-blue-600 dark:group-hover:fill-blue-400 transition-colors" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (test.id) {
+                          setPendingDeleteId(test.id);
+                          openDeleteConfirmModal();
+                        }
+                      }}
+                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors group"
+                      title="O'chirish"
+                    >
+                      <DeleteIcon className="size-5 fill-gray-600 dark:fill-gray-400 group-hover:fill-red-600 dark:group-hover:fill-red-400 transition-colors" />
+                    </button>
                   </div>
 
                   {/* Info */}

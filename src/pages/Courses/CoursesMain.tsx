@@ -6,6 +6,8 @@ import PageBreadcrumb from '../../components/common/PageBreadCrumb';
 import { PencilIcon, DeleteIcon, ChatIcon, PlusIcon, EyeIcon, VideoIcon } from '../../icons';
 import Button from '../../components/ui/button/Button';
 import CourseCommentsModal from '../../components/modals/CourseCommentsModal';
+import VideoModal from '../../components/modals/VideoModal';
+import SectionModal from '../../components/modals/SectionModal';
 import { Modal } from '../../components/ui/modal';
 import Badge from '../../components/ui/badge/Badge';
 import { LoadSpinner } from '../../components/spinner/load-spinner';
@@ -14,6 +16,8 @@ import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import Label from '../../components/form/Label';
 import Input from '../../components/form/input/InputField';
 import Select from '../../components/form/Select';
+import type { VideoFormData } from '../../components/modals/VideoModal';
+import type { SectionFormData } from '../../components/modals/SectionModal';
 
 interface Teacher {
   id: number;
@@ -88,12 +92,25 @@ const CoursesMainPage = () => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [selectedCourse, setSelectedCourse] = useState<{ id: number; title: string } | null>(null);
   const [viewingCourse, setViewingCourse] = useState<CourseWithSections | null>(null);
+  const [viewingVideo, setViewingVideo] = useState<Video | null>(null);
+  const [sectionsReloadKey, setSectionsReloadKey] = useState(0);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const [pageSize] = useState(10);
+  
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   
   // Modals
   const { isOpen: isCourseModalOpen, openModal: openCourseModal, closeModal: closeCourseModal } = useModal();
   const { isOpen: isSectionModalOpen, openModal: openSectionModal, closeModal: closeSectionModal } = useModal();
   const { isOpen: isVideoModalOpen, openModal: openVideoModal, closeModal: closeVideoModal } = useModal();
   const { isOpen: isViewModalOpen, openModal: openViewModal, closeModal: closeViewModal } = useModal();
+  const { isOpen: isVideoViewModalOpen, openModal: openVideoViewModal, closeModal: closeVideoViewModal } = useModal();
+  const { isOpen: isVideoPlayerModalOpen, openModal: openVideoPlayerModal, closeModal: closeVideoPlayerModal } = useModal();
   const { isOpen: isDeleteOpen, openModal: openDeleteModal, closeModal: closeDeleteModal } = useModal();
   
   // Selected items for edit
@@ -102,6 +119,9 @@ const CoursesMainPage = () => {
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [deleteType, setDeleteType] = useState<'course' | 'section' | 'video'>('course');
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteInfo, setDeleteInfo] = useState<{ name?: string; videoCount?: number }>({});
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [thumbnailUploadProgress, setThumbnailUploadProgress] = useState(0);
   
   // Form data
   const [courseForm, setCourseForm] = useState({
@@ -142,13 +162,40 @@ const CoursesMainPage = () => {
     fetchCourses();
     fetchTeachers();
     fetchCategories();
-  }, []);
+  }, [currentPage, statusFilter]);
+
+  useEffect(() => {
+    if (isCourseModalOpen) {
+      console.log('Modal opened, teachers:', teachers);
+      console.log('Modal opened, categories:', categories);
+      if (teachers.length === 0) {
+        console.warn('Teachers array is empty! Fetching again...');
+        fetchTeachers();
+      }
+      if (categories.length === 0) {
+        console.warn('Categories array is empty! Fetching again...');
+        fetchCategories();
+      }
+    }
+  }, [isCourseModalOpen, teachers, categories]);
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const response = await axiosClient.get('/course');
-      setCourses(response.data);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString(),
+        includeInactive: 'true',
+      });
+      
+      if (statusFilter !== 'all') {
+        params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
+      }
+      
+      const response = await axiosClient.get(`/course?${params.toString()}`);
+      setCourses(response.data.courses || response.data);
+      setTotalPages(response.data.totalPages || 1);
+      setTotalCourses(response.data.total || response.data.length);
     } catch (error: unknown) {
       toast.error('Kurslarni yuklashda xato!');
       console.error('Error fetching courses:', error);
@@ -159,19 +206,67 @@ const CoursesMainPage = () => {
 
   const fetchTeachers = async () => {
     try {
-      const response = await axiosClient.get('/teacher');
-      setTeachers(response.data);
+      const response = await axiosClient.get('/teachers');
+      console.log('Teachers loaded:', response.data);
+      console.log('Teachers count:', Array.isArray(response.data) ? response.data.length : 0);
+      setTeachers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Teachers fetch error:', error);
+      toast.error('O\'qituvchilarni yuklashda xato!');
+      setTeachers([]);
     }
   };
 
   const fetchCategories = async () => {
     try {
       const response = await axiosClient.get('/category');
-      setCategories(response.data);
+      console.log('Categories loaded:', response.data);
+      console.log('Categories count:', Array.isArray(response.data) ? response.data.length : 0);
+      setCategories(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Categories fetch error:', error);
+      toast.error('Kategoriyalarni yuklashda xato!');
+      setCategories([]);
+    }
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Rasm hajmi 5MB dan oshmasin!');
+      return;
+    }
+
+    setUploadingThumbnail(true);
+    setThumbnailUploadProgress(0);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      const response = await axiosClient.post('/upload/image', formDataUpload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const progress = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
+          setThumbnailUploadProgress(progress);
+        },
+      });
+
+      setCourseForm(prev => ({ ...prev, thumbnail: response.data.url }));
+      toast.success('Rasm yuklandi!');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Rasm yuklashda xatolik!');
+    } finally {
+      setUploadingThumbnail(false);
+      setThumbnailUploadProgress(0);
+      // Reset file input
+      e.target.value = '';
     }
   };
 
@@ -245,21 +340,22 @@ const CoursesMainPage = () => {
     openSectionModal();
   };
 
-  const handleSectionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSectionSubmit = async (data: SectionFormData) => {
     try {
       if (editingSection) {
-        await axiosClient.patch(`/sections/${editingSection.id}`, sectionForm);
+        await axiosClient.patch(`/sections/${editingSection.id}`, data);
         toast.success('Bo\'lim yangilandi!');
       } else {
-        await axiosClient.post('/sections', sectionForm);
+        await axiosClient.post('/sections', data);
         toast.success('Bo\'lim qo\'shildi!');
       }
       fetchCourses();
+      setSectionsReloadKey((prev) => prev + 1); // Trigger sections reload
       closeSectionModal();
       resetSectionForm();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Xatolik yuz berdi!');
+      throw error;
     }
   };
 
@@ -298,22 +394,18 @@ const CoursesMainPage = () => {
     openVideoModal();
   };
 
-  const handleVideoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingVideo) {
-        await axiosClient.patch(`/video/${editingVideo.id}`, videoForm);
-        toast.success('Video yangilandi!');
-      } else {
-        await axiosClient.post('/video', videoForm);
-        toast.success('Video qo\'shildi!');
-      }
-      fetchCourses();
-      closeVideoModal();
-      resetVideoForm();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Xatolik yuz berdi!');
+  const handleVideoSubmit = async (data: VideoFormData) => {
+    if (editingVideo) {
+      await axiosClient.patch(`/video/${editingVideo.id}`, data);
+      toast.success('Video yangilandi!');
+    } else {
+      await axiosClient.post('/video', data);
+      toast.success('Video qo\'shildi!');
     }
+    fetchCourses();
+    setSectionsReloadKey((prev) => prev + 1); // Trigger sections reload
+    closeVideoModal();
+    resetVideoForm();
   };
 
   const resetVideoForm = () => {
@@ -334,10 +426,21 @@ const CoursesMainPage = () => {
     });
   };
 
+  const handleVideoView = (video: Video) => {
+    setViewingVideo(video);
+    openVideoViewModal();
+  };
+
+  const handleVideoPlay = (video: Video) => {
+    setViewingVideo(video);
+    openVideoPlayerModal();
+  };
+
   // Delete handlers
-  const handleDeleteClick = (type: 'course' | 'section' | 'video', id: number) => {
+  const handleDeleteClick = (type: 'course' | 'section' | 'video', id: number, info?: { name?: string; videoCount?: number }) => {
     setDeleteType(type);
     setDeleteId(id);
+    setDeleteInfo(info || {});
     openDeleteModal();
   };
 
@@ -355,6 +458,7 @@ const CoursesMainPage = () => {
       toast.success(`${deleteType === 'course' ? 'Kurs' : deleteType === 'section' ? 'Bo\'lim' : 'Video'} o'chirildi!`);
       
       fetchCourses();
+      setSectionsReloadKey((prev) => prev + 1); // Trigger sections reload
       closeDeleteModal();
     } catch (error) {
       toast.error('O\'chirishda xato!');
@@ -409,7 +513,17 @@ const CoursesMainPage = () => {
     const detailed = await fetchCourseWithSections(course.id);
     if (detailed) {
       setViewingCourse(detailed);
-      setIsViewModalOpen(true);
+      openViewModal();
+    }
+  };
+
+  const handleToggleStatus = async (courseId: number, currentStatus: boolean) => {
+    try {
+      await axiosClient.patch(`/course/${courseId}`, { isActive: !currentStatus });
+      toast.success(`Kurs ${!currentStatus ? 'faollashtirildi' : 'nofaol qilindi'}!`);
+      fetchCourses();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Xatolik yuz berdi!');
     }
   };
 
@@ -469,18 +583,37 @@ const CoursesMainPage = () => {
       
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Barcha Kurslar</h1>
-          <Button
-            size="sm"
-            variant="primary"
-            startIcon={<PlusIcon className="size-5 fill-white" />}
-            onClick={() => {
-              resetCourseForm();
-              openCourseModal();
-            }}
-          >
-            Kurs Qo'shish
-          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Barcha Kurslar</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Jami: {totalCourses} ta kurs
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as 'all' | 'active' | 'inactive');
+                setCurrentPage(1);
+              }}
+              className="min-w-[150px]"
+            >
+              <option value="all">Barchasi</option>
+              <option value="active">Faol</option>
+              <option value="inactive">Nofaol</option>
+            </Select>
+            <Button
+              size="sm"
+              variant="primary"
+              startIcon={<PlusIcon className="size-5 fill-white" />}
+              onClick={() => {
+                resetCourseForm();
+                openCourseModal();
+              }}
+            >
+              Kurs Qo'shish
+            </Button>
+          </div>
         </div>
 
         {loading && (
@@ -539,12 +672,19 @@ const CoursesMainPage = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleStatus(course.id, course.isActive);
+                      }}
+                      className="cursor-pointer"
+                      title={course.isActive ? 'Nofaol qilish' : 'Faollashtirish'}
+                    >
                       <Badge size="sm" color={course.isActive ? 'success' : 'error'}>
                         {course.isActive ? 'Faol' : 'Nofaol'}
                       </Badge>
-                    </span>
+                    </button>
                     {course.isFree ? (
                       <Badge size="sm" color="info">Bepul</Badge>
                     ) : (
@@ -582,7 +722,7 @@ const CoursesMainPage = () => {
                   <Button
                     size="mini"
                     variant="outline"
-                    onClick={() => handleDeleteClick('course', course.id)}
+                    onClick={() => handleDeleteClick('course', course.id, { name: course.title })}
                   >
                     <DeleteIcon className="size-4 fill-black dark:fill-white" />
                   </Button>
@@ -595,7 +735,7 @@ const CoursesMainPage = () => {
                     }}
                     startIcon={<PlusIcon className="size-4 fill-white" />}
                   >
-                    Bo&apos;lim qo&apos;shish
+                    Bo'lim qo'shish
                   </Button>
                 </div>
               </div>
@@ -603,6 +743,7 @@ const CoursesMainPage = () => {
               {/* Sections - Loaded on demand when expanded */}
               {expandedCourses.has(course.id) && (
                 <CourseSectionsView 
+                  key={`${course.id}-${sectionsReloadKey}`}
                   courseId={course.id}
                   expandedSections={expandedSections}
                   toggleSection={toggleSection}
@@ -612,6 +753,8 @@ const CoursesMainPage = () => {
                   handleSectionEdit={handleSectionEdit}
                   handleVideoAdd={handleVideoAdd}
                   handleVideoEdit={handleVideoEdit}
+                  handleVideoView={handleVideoView}
+                  handleVideoPlay={handleVideoPlay}
                 />
               )}
             </div>
@@ -623,10 +766,56 @@ const CoursesMainPage = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Oldingi
+            </Button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show only 5 pages around current page
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 2 && page <= currentPage + 2)
+              ) {
+                return (
+                  <Button
+                    key={page}
+                    size="sm"
+                    variant={currentPage === page ? 'primary' : 'outline'}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                );
+              } else if (page === currentPage - 3 || page === currentPage + 3) {
+                return <span key={page} className="px-2 text-gray-500">...</span>;
+              }
+              return null;
+            })}
+            
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Keyingi
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* View Course Modal */}
-      <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} className="max-w-[700px] m-4">
+      <Modal isOpen={isViewModalOpen} onClose={closeViewModal} className="max-w-[700px] m-4">
         <div className="relative w-full p-6 bg-white rounded-3xl dark:bg-gray-900">
           <div className="px-2 pr-14">
             <h4 className="mb-4 text-2xl font-semibold text-gray-800 dark:text-white/90">
@@ -669,7 +858,7 @@ const CoursesMainPage = () => {
               </div>
               {viewingCourse.thumbnail && (
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Rasm</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Banner</p>
                   <img
                     src={getImageUrl(viewingCourse.thumbnail) || ''}
                     alt={viewingCourse.title}
@@ -726,7 +915,7 @@ const CoursesMainPage = () => {
             </div>
           )}
           <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-            <Button size="sm" variant="outline" onClick={() => setIsViewModalOpen(false)}>
+            <Button size="sm" variant="outline" onClick={closeViewModal}>
               Yopish
             </Button>
           </div>
@@ -745,7 +934,7 @@ const CoursesMainPage = () => {
             </p>
           </div>
           <form onSubmit={handleCourseSubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
+            <div className="custom-scrollbar max-h-[60vh] overflow-y-auto px-2 pb-3 space-y-4">
               <div>
                 <Label>Kurs nomi</Label>
                 <Input
@@ -772,36 +961,86 @@ const CoursesMainPage = () => {
                 />
               </div>
               <div>
-                <Label>Thumbnail URL</Label>
-                <Input
-                  type="text"
-                  value={courseForm.thumbnail}
-                  onChange={(e) => setCourseForm({ ...courseForm, thumbnail: e.target.value })}
-                />
+                <Label>Banner (Rasm yoki URL)</Label>
+                <div className="space-y-2">
+                  <Input
+                    type="text"
+                    value={courseForm.thumbnail}
+                    onChange={(e) => setCourseForm({ ...courseForm, thumbnail: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">yoki</span>
+                    <label className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleThumbnailUpload}
+                        className="hidden"
+                        disabled={uploadingThumbnail}
+                      />
+                      <div className="cursor-pointer px-3 py-1.5 text-xs border border-brand-300 dark:border-brand-700 rounded-md text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-center">
+                        {uploadingThumbnail ? 'Yuklanmoqda...' : courseForm.thumbnail ? 'Rasmni almashtirish' : 'Rasm yuklash'}
+                      </div>
+                    </label>
+                  </div>
+                  {uploadingThumbnail && (
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-brand-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${thumbnailUploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                  {courseForm.thumbnail && (
+                    <div className="relative">
+                      <img
+                        src={getImageUrl(courseForm.thumbnail) || ''}
+                        alt="Banner preview"
+                        className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  JPG, PNG, GIF formatlar qo'llab-quvvatlanadi (Max: 5MB)
+                </p>
               </div>
               <div>
                 <Label>O&apos;qituvchi</Label>
                 <Select
                   value={courseForm.teacherId.toString()}
                   onChange={(e) => setCourseForm({ ...courseForm, teacherId: parseInt(e.target.value) })}
+                  style={{ colorScheme: 'light dark' }}
                 >
-                  <option value="0">Tanlang...</option>
+                  <option value="0" style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>
+                    {teachers.length === 0 ? "O'qituvchilar yo'q" : "Tanlang..."}
+                  </option>
                   {teachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
+                    <option key={teacher.id} value={teacher.id} style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>
                       {teacher.name}
                     </option>
                   ))}
                 </Select>
+                {teachers.length === 0 && (
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                    ⚠️ Avval o'qituvchi qo'shing
+                  </p>
+                )}
               </div>
               <div>
                 <Label>Kategoriya</Label>
                 <Select
                   value={courseForm.categoryId.toString()}
                   onChange={(e) => setCourseForm({ ...courseForm, categoryId: parseInt(e.target.value) })}
+                  style={{ colorScheme: 'light dark' }}
                 >
-                  <option value="0">Tanlang...</option>
+                  <option value="0" style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>Tanlang...</option>
                   {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
+                    <option key={category.id} value={category.id} style={{ backgroundColor: 'var(--tw-bg-opacity)', color: 'inherit' }}>
                       {category.nameUz}
                     </option>
                   ))}
@@ -848,169 +1087,36 @@ const CoursesMainPage = () => {
       </Modal>
 
       {/* Section Modal */}
-      <Modal isOpen={isSectionModalOpen} onClose={closeSectionModal} className="max-w-[600px] m-4">
-        <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
-          <div className="px-2 pr-14">
-            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {editingSection ? 'Bo&apos;limni Tahrirlash' : 'Yangi Bo&apos;lim'}
-            </h4>
-          </div>
-          <form onSubmit={handleSectionSubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
-              <div>
-                <Label>Bo&apos;lim nomi</Label>
-                <Input
-                  type="text"
-                  value={sectionForm.title}
-                  onChange={(e) => setSectionForm({ ...sectionForm, title: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Qisqa matn</Label>
-                <Input
-                  type="text"
-                  value={sectionForm.subtitle}
-                  onChange={(e) => setSectionForm({ ...sectionForm, subtitle: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Tartib raqami</Label>
-                <Input
-                  type="number"
-                  value={sectionForm.order}
-                  onChange={(e) => setSectionForm({ ...sectionForm, order: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button type="button" size="sm" variant="outline" onClick={closeSectionModal}>
-                Bekor qilish
-              </Button>
-              <Button type="submit" size="sm" variant="primary">
-                Saqlash
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Modal>
+      <SectionModal
+        isOpen={isSectionModalOpen}
+        onClose={closeSectionModal}
+        onSubmit={handleSectionSubmit}
+        editingSection={editingSection}
+        initialCourseId={sectionForm.courseId}
+      />
 
       {/* Video Modal */}
-      <Modal isOpen={isVideoModalOpen} onClose={closeVideoModal} className="max-w-[700px] m-4">
-        <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
-          <div className="px-2 pr-14">
-            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {editingVideo ? 'Videoni Tahrirlash' : 'Yangi Video'}
-            </h4>
-          </div>
-          <form onSubmit={handleVideoSubmit} className="flex flex-col">
-            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3 space-y-4">
-              <div>
-                <Label>Video nomi</Label>
-                <Input
-                  type="text"
-                  value={videoForm.title}
-                  onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Qisqa matn</Label>
-                <Input
-                  type="text"
-                  value={videoForm.subtitle}
-                  onChange={(e) => setVideoForm({ ...videoForm, subtitle: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Tavsif</Label>
-                <textarea
-                  value={videoForm.description}
-                  onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label>Video URL</Label>
-                <Input
-                  type="text"
-                  value={videoForm.url}
-                  onChange={(e) => setVideoForm({ ...videoForm, url: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Thumbnail URL</Label>
-                <Input
-                  type="text"
-                  value={videoForm.thumbnail}
-                  onChange={(e) => setVideoForm({ ...videoForm, thumbnail: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Davomiyligi (soniya)</Label>
-                  <Input
-                    type="number"
-                    value={videoForm.duration}
-                    onChange={(e) => setVideoForm({ ...videoForm, duration: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label>Hajmi</Label>
-                  <Input
-                    type="text"
-                    value={videoForm.size}
-                    onChange={(e) => setVideoForm({ ...videoForm, size: e.target.value })}
-                    placeholder="10MB"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Tartib raqami</Label>
-                <Input
-                  type="number"
-                  value={videoForm.order}
-                  onChange={(e) => setVideoForm({ ...videoForm, order: parseInt(e.target.value) })}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={videoForm.isFree}
-                  onChange={(e) => setVideoForm({ ...videoForm, isFree: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <Label>Bepul video</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={videoForm.isActive}
-                  onChange={(e) => setVideoForm({ ...videoForm, isActive: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <Label>Faol</Label>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button type="button" size="sm" variant="outline" onClick={closeVideoModal}>
-                Bekor qilish
-              </Button>
-              <Button type="submit" size="sm" variant="primary">
-                Saqlash
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Modal>
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={closeVideoModal}
+        onSubmit={handleVideoSubmit}
+        editingVideo={editingVideo}
+        initialCourseId={videoForm.courseId}
+        initialSectionId={videoForm.sectionId}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={isDeleteOpen}
         onClose={closeDeleteModal}
         onConfirm={handleDeleteConfirm}
-        title={`${deleteType === 'course' ? 'Kursni' : deleteType === 'section' ? 'Bo&apos;limni' : 'Videoni'} o&apos;chirish`}
-        message={`Ushbu ${deleteType === 'course' ? 'kursni' : deleteType === 'section' ? 'bo&apos;limni' : 'videoni'} o&apos;chirmoqchimisiz?`}
-        itemName={deleteId ? `#${deleteId}` : undefined}
+        title={`${deleteType === 'course' ? 'Kursni' : deleteType === 'section' ? 'Bo\'limni' : 'Videoni'} o\'chirish`}
+        message={
+          deleteType === 'section' && deleteInfo.videoCount !== undefined
+            ? `Ushbu bo'limni o'chirmoqchimisiz? ${deleteInfo.videoCount > 0 ? `\n\n⚠️ Ogohlantirish: Bu bo'limdagi ${deleteInfo.videoCount} ta video ham o'chiriladi!` : ''}`
+            : `Ushbu ${deleteType === 'course' ? 'kursni' : deleteType === 'section' ? 'bo\'limni' : 'videoni'} o\'chirmoqchimisiz?`
+        }
+        itemName={deleteInfo.name || (deleteId ? `#${deleteId}` : undefined)}
       />
 
       {/* Comments Modal */}
@@ -1022,6 +1128,153 @@ const CoursesMainPage = () => {
           onClose={() => setSelectedCourse(null)}
         />
       )}
+
+      {/* Video Player Modal - Kichik */}
+      <Modal isOpen={isVideoPlayerModalOpen} onClose={closeVideoPlayerModal} className="max-w-[600px] m-4">
+        <div className="relative w-full p-4 bg-white rounded-3xl dark:bg-gray-900">
+          <div className="px-2 pr-14">
+            <h4 className="mb-3 text-lg font-semibold text-gray-800 dark:text-white/90">
+              Video Player
+            </h4>
+          </div>
+          {viewingVideo && viewingVideo.url && (
+            <div className="px-2">
+              <video
+                controls
+                autoPlay
+                className="w-full max-h-[400px] rounded-lg border border-gray-200 dark:border-gray-700"
+                style={{ objectFit: 'contain' }}
+                poster={viewingVideo.thumbnail ? getImageUrl(viewingVideo.thumbnail) || '' : undefined}
+              >
+                <source src={getImageUrl(viewingVideo.url) || ''} type="video/mp4" />
+                <source src={getImageUrl(viewingVideo.url) || ''} type="video/webm" />
+                <source src={getImageUrl(viewingVideo.url) || ''} type="video/ogg" />
+                Sizning brauzeringiz video playbackni qo'llab-quvvatlamaydi.
+              </video>
+              <div className="mt-3">
+                <p className="text-sm font-medium text-gray-800 dark:text-white">{viewingVideo.title}</p>
+                {viewingVideo.subtitle && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{viewingVideo.subtitle}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-3 px-2 mt-4 lg:justify-end">
+            <Button size="sm" variant="outline" onClick={closeVideoPlayerModal}>
+              Yopish
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Video View Modal - To'liq ma'lumotlar */}
+      <Modal isOpen={isVideoViewModalOpen} onClose={closeVideoViewModal} className="max-w-[900px] m-4">
+        <div className="relative w-full p-6 bg-white rounded-3xl dark:bg-gray-900">
+          <div className="px-2 pr-14">
+            <h4 className="mb-4 text-2xl font-semibold text-gray-800 dark:text-white/90">
+              Video ma'lumotlari
+            </h4>
+          </div>
+          {viewingVideo && (
+            <div className="px-2 space-y-4">
+              {viewingVideo.thumbnail && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Banner</p>
+                  <img
+                    src={getImageUrl(viewingVideo.thumbnail) || ''}
+                    alt={viewingVideo.title}
+                    className="w-full max-w-md h-48 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">ID</p>
+                  <p className="text-base font-medium text-gray-800 dark:text-white">#{viewingVideo.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Tartib</p>
+                  <p className="text-base font-medium text-gray-800 dark:text-white">#{viewingVideo.order}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Holati</p>
+                  <div>
+                    <Badge size="sm" color={viewingVideo.isActive ? 'success' : 'error'}>
+                      {viewingVideo.isActive ? 'Faol' : 'Nofaol'}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Turi</p>
+                  <div>
+                    {viewingVideo.isFree ? (
+                      <Badge size="sm" color="info">Bepul</Badge>
+                    ) : (
+                      <Badge size="sm" color="warning">Pullik</Badge>
+                    )}
+                  </div>
+                </div>
+                {viewingVideo.duration && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Davomiyligi</p>
+                    <p className="text-base font-medium text-gray-800 dark:text-white">
+                      {formatDuration(viewingVideo.duration)}
+                    </p>
+                  </div>
+                )}
+                {viewingVideo.size && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Hajmi</p>
+                    <p className="text-base font-medium text-gray-800 dark:text-white">
+                      {formatSize(viewingVideo.size)}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nomi</p>
+                <p className="text-base font-medium text-gray-800 dark:text-white">
+                  {viewingVideo.title}
+                </p>
+              </div>
+              {viewingVideo.subtitle && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Qisqa matn</p>
+                  <p className="text-base font-medium text-gray-800 dark:text-white">
+                    {viewingVideo.subtitle}
+                  </p>
+                </div>
+              )}
+              {viewingVideo.description && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Tavsif</p>
+                  <p className="text-base text-gray-800 dark:text-white whitespace-pre-wrap">
+                    {viewingVideo.description}
+                  </p>
+                </div>
+              )}
+              {viewingVideo.url && (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Video URL</p>
+                  <a
+                    href={getImageUrl(viewingVideo.url) || ''}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-brand-600 dark:text-brand-400 hover:underline break-all"
+                  >
+                    {getImageUrl(viewingVideo.url) || viewingVideo.url}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+            <Button size="sm" variant="outline" onClick={closeVideoViewModal}>
+              Yopish
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };
@@ -1036,17 +1289,21 @@ const CourseSectionsView = ({
   handleDeleteClick,
   handleSectionEdit,
   handleVideoAdd,
-  handleVideoEdit
+  handleVideoEdit,
+  handleVideoView,
+  handleVideoPlay
 }: { 
   courseId: number;
   expandedSections: Set<string>;
   toggleSection: (courseId: number, sectionId: number | null) => void;
   formatDuration: (seconds?: number) => string;
   formatSize: (bytes?: string) => string;
-  handleDeleteClick: (type: 'video' | 'section', id: number) => void;
+  handleDeleteClick: (type: 'video' | 'section', id: number, info?: { name?: string; videoCount?: number }) => void;
   handleSectionEdit: (section: Section) => void;
   handleVideoAdd: (courseId: number, sectionId?: number) => void;
   handleVideoEdit: (video: Video) => void;
+  handleVideoView: (video: Video) => void;
+  handleVideoPlay: (video: Video) => void;
 }) => {
   const [sections, setSections] = useState<SectionGroup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1117,6 +1374,9 @@ const CourseSectionsView = ({
                 <span className="text-sm">
                   {expandedSections.has(sectionKey) ? '▼' : '▶'}
                 </span>
+                <span className="px-2 py-0.5 bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 text-xs font-semibold rounded-full">
+                  #{sectionGroup.order}
+                </span>
                 <h3 className="font-medium text-gray-700 dark:text-gray-300">
                   📑 {sectionGroup.sectionTitle}
                 </h3>
@@ -1148,7 +1408,10 @@ const CourseSectionsView = ({
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteClick('section', sectionGroup.sectionId!);
+                        handleDeleteClick('section', sectionGroup.sectionId!, {
+                          name: sectionGroup.sectionTitle,
+                          videoCount: sectionGroup.videos.length,
+                        });
                       }}
                     >
                       <DeleteIcon className="size-4 fill-black dark:fill-white" />
@@ -1198,22 +1461,37 @@ const CourseSectionsView = ({
                     {sectionGroup.videos.map((video) => (
                       <tr key={video.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
                         <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                          <div className="flex items-center">
-                            {video.thumbnail && (
-                              <img
-                                src={getImageUrl(video.thumbnail) || ''}
-                                alt={video.title}
-                                className="h-12 w-20 rounded object-cover mr-3"
-                                onError={(e) => {
-                                  const target = e.currentTarget;
-                                  target.style.display = 'none';
-                                }}
-                              />
+                          <div className="flex items-center gap-3">
+                            {video.thumbnail ? (
+                              <div className="relative group cursor-pointer" onClick={() => handleVideoPlay(video)}>
+                                <img
+                                  src={getImageUrl(video.thumbnail) || ''}
+                                  alt={video.title}
+                                  className="h-14 w-24 rounded object-cover shrink-0 border border-gray-200 dark:border-gray-600"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="56" viewBox="0 0 96 56"%3E%3Crect width="96" height="56" fill="%23e5e7eb"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="%239ca3af"%3E📹%3C/text%3E%3C/svg%3E';
+                                    target.onerror = null;
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors rounded flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                            ) : (
+                              <div 
+                                className="h-14 w-24 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                onClick={() => handleVideoPlay(video)}
+                              >
+                                <VideoIcon className="size-8 fill-gray-400" />
+                              </div>
                             )}
-                            <div className="max-w-md">
-                              <div className="font-medium">{video.title}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{video.title}</div>
                               {video.subtitle && (
-                                <div className="text-xs text-gray-500">{video.subtitle}</div>
+                                <div className="text-xs text-gray-500 truncate">{video.subtitle}</div>
                               )}
                             </div>
                           </div>
@@ -1227,8 +1505,8 @@ const CourseSectionsView = ({
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                           #{video.order}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-1">
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1 max-w-[120px]">
                             <Badge size="sm" color={video.isActive ? 'success' : 'error'}>
                               {video.isActive ? 'Faol' : 'Nofaol'}
                             </Badge>
@@ -1242,6 +1520,14 @@ const CourseSectionsView = ({
                             <Button
                               size="mini"
                               variant="outline"
+                              onClick={() => handleVideoView(video)}
+                              title="Ko'rish"
+                            >
+                              <EyeIcon className="size-4 fill-black dark:fill-white" />
+                            </Button>
+                            <Button
+                              size="mini"
+                              variant="outline"
                               onClick={() => handleVideoEdit(video)}
                             >
                               <PencilIcon className="size-4 fill-black dark:fill-white" />
@@ -1249,7 +1535,7 @@ const CourseSectionsView = ({
                             <Button
                               size="mini"
                               variant="outline"
-                              onClick={() => handleDeleteClick('video', video.id)}
+                              onClick={() => handleDeleteClick('video', video.id, { name: video.title })}
                             >
                               <DeleteIcon className="size-4 fill-black dark:fill-white" />
                             </Button>

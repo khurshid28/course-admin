@@ -10,17 +10,18 @@ export default function Home() {
         title="Kurs Platformasi"
         description="Kurs Platformasi - Administrator Paneli"
       />
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
+      <div className="space-y-6">
         {/* Asosiy statistikalar */}
-        <div className="col-span-12">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">
+            Statistika
+          </h2>
           <DashboardMetrics />
         </div>
 
         {/* Chart'lar */}
-        <div className="col-span-12 lg:col-span-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <CoursesChart />
-        </div>
-        <div className="col-span-12 lg:col-span-6">
           <RevenueChart />
         </div>
       </div>

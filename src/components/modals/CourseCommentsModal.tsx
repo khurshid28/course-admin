@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../service/axios.service';
-import { CloseIcon, DeleteIcon } from '../../icons';
+import { DeleteIcon } from '../../icons';
+import { Modal } from '../ui/modal';
 
 interface Comment {
   id: number;
@@ -64,27 +65,16 @@ export default function CourseCommentsModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b dark:border-gray-700">
-          <div>
-            <h2 className="text-lg font-bold">Kurs Izohlari</h2>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{courseTitle}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <CloseIcon className="w-5 h-5" />
-          </button>
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-2xl max-h-[85vh] m-4">
+      <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11 max-h-[85vh]">
+        <div className="px-2 pr-14">
+          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+            Kurs Izohlari
+          </h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{courseTitle}</p>
         </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="custom-scrollbar max-h-[55vh] overflow-y-auto px-2 pb-3">
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
@@ -167,22 +157,12 @@ export default function CourseCommentsModal({
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Jami: <span className="font-semibold">{comments.length}</span> ta izoh
-            </p>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm"
-            >
-              Yopish
-            </button>
-          </div>
+        <div className="mt-4 px-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Jami: <span className="font-semibold">{comments.length}</span> ta izoh
+          </p>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

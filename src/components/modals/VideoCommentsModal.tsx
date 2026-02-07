@@ -71,8 +71,8 @@ export default function VideoCommentsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
           <div>
-            <h2 className="text-xl font-bold">Kurs Izohlari</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{courseTitle}</p>
+            <h2 className="text-xl font-bold">Video Izohlari</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{videoTitle}</p>
           </div>
           <button
             onClick={onClose}
