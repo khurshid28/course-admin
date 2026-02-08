@@ -146,7 +146,7 @@ const EnrollmentsPage = () => {
                 { value: 'INACTIVE', label: 'Nofaol' },
               ]}
               defaultValue={filter}
-              onChange={(value) => setFilter(value)}
+              onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter tanlang"
             />
           </div>
@@ -220,7 +220,7 @@ const EnrollmentsPage = () => {
                       <div className="flex items-center gap-3">
                         {(enrollment.course?.banners?.[0]?.image || enrollment.course?.thumbnail) ? (
                           <img
-                            src={getImageUrl(enrollment.course.banners?.[0]?.image || enrollment.course.thumbnail || '')}
+                            src={getImageUrl(enrollment.course.banners?.[0]?.image || enrollment.course.thumbnail || '') || undefined}
                             alt={enrollment.course.title}
                             className="h-12 w-16 rounded object-cover flex-shrink-0 bg-gray-100 dark:bg-gray-700"
                             onLoad={() => {
@@ -380,7 +380,7 @@ const EnrollmentsPage = () => {
                         <img
                           src={getImageUrl(
                             viewingEnrollment.course.banners?.[0]?.image || viewingEnrollment.course.thumbnail || ''
-                          )}
+                          ) || undefined}
                           alt={viewingEnrollment.course.title}
                           className="w-full h-40 object-cover rounded-lg mb-3"
                           onLoad={() => {

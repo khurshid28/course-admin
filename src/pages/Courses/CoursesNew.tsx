@@ -541,7 +541,7 @@ export default function CoursesNewPage() {
                     {category.image && (
                       <div className="h-40 overflow-hidden">
                         <img
-                          src={getImageUrl(category.image)}
+                          src={getImageUrl(category.image) || undefined}
                           alt={category.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -627,7 +627,7 @@ export default function CoursesNewPage() {
                         </span>
                         {course.thumbnail && (
                           <img
-                            src={getImageUrl(course.thumbnail)}
+                            src={getImageUrl(course.thumbnail) || undefined}
                             alt={course.title}
                             className="h-16 w-24 rounded object-cover"
                             onError={(e) => {
@@ -968,7 +968,7 @@ export default function CoursesNewPage() {
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Rasm</p>
                   <img
-                    src={getImageUrl(viewingCourse.thumbnail)}
+                    src={getImageUrl(viewingCourse.thumbnail) || undefined}
                     alt={viewingCourse.title}
                     className="w-full max-w-md h-48 object-cover rounded-lg"
                     onError={(e) => {

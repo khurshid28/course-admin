@@ -248,8 +248,8 @@ export default function BooksTable({
   ];
   let [optionValue, setoptionValue] = useState("5");
 
-  const handleSelectChange = (value: string) => {
-    setoptionValue(value);
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setoptionValue(e.target.value);
   };
 
   // Pationation
@@ -289,8 +289,8 @@ export default function BooksTable({
 
   let [subjectoptionValue, setSubjectoptionValue] = useState("Hamma Fanlar");
 
-  const handleSelectSubjectChange = (value: string) => {
-    setSubjectoptionValue(value);
+  const handleSelectSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSubjectoptionValue(e.target.value);
   };
   const handleSelectAllSubjectChange = (value: string) => {};
 

@@ -9,9 +9,11 @@ interface Comment {
   comment: string;
   images?: string;
   createdAt: string;
+  rating?: number;
   user?: {
     firstName?: string;
     lastName?: string;
+    surname?: string;
     phone?: string;
   };
 }

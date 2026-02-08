@@ -248,8 +248,8 @@ import Pagination from "../../ui/pagination/Pagination";
     ];
     let [optionValue, setoptionValue] = useState("5");
   
-    const handleSelectChange = (value: string) => {
-      setoptionValue(value);
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setoptionValue(e.target.value);
     };
   
     // Pationation

@@ -276,8 +276,8 @@ export default function SectionsTable(
     ];
     let [optionValue, setoptionValue] = useState("5");
 
-    const handleSelectChange = (value: string) => {
-        setoptionValue(value);
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setoptionValue(e.target.value);
     };
 
     // Pationation
@@ -327,8 +327,8 @@ export default function SectionsTable(
 
 
 
-    const handleSelectBookChange = (value: string) => {
-        setBookoptionValue(value);
+    const handleSelectBookChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setBookoptionValue(e.target.value);
     };
 
     let deleteSection= async(id:number | undefined)=>{

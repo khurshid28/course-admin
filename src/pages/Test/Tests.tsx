@@ -38,6 +38,9 @@ export interface Test {
   questions?: unknown[];
   _count?: { questions: number };
   course?: { title: string };
+  section?: string;
+  book_id?: number;
+  name?: string;
 }
 
 export default function TestsPage() {

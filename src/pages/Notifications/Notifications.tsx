@@ -48,6 +48,14 @@ export default function NotificationsPage() {
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterRead, setFilterRead] = useState<'all' | 'read' | 'unread'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const fetchNotifications = useCallback(() => {
+    return axiosClient.get('/notifications').then(res => res.data);
+  }, []);
+
   const fetchNews = useCallback(() => {
     return axiosClient.get('/news').then(res => {
       // Faqat published yangiliklar

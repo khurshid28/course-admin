@@ -296,7 +296,7 @@ const PromoCodesPage = () => {
                         { value: 'UNLIMITED', label: 'Cheksiz' },
                       ]}
                       defaultValue={formData.type || 'SINGLE_USE'}
-                      onChange={(value) => setFormData({ ...formData, type: value })}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                       placeholder="Tur tanlang"
                     />
                   </div>

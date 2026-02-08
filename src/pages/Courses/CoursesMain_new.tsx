@@ -35,4 +35,17 @@ interface Course {
 interface Section {
   id: number;
   title: string;
-  subtitle
+  subtitle?: string;
+  order: number;
+  courseId: number;
+  videos?: Video[];
+}
+
+interface Video {
+  id: number;
+  title: string;
+  subtitle?: string;
+  duration?: number;
+  order: number;
+  sectionId: number;
+}
