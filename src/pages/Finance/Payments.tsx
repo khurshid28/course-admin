@@ -157,7 +157,7 @@ const PaymentsPage = () => {
                 { value: 'CANCELLED', label: 'Bekor qilingan' },
               ]}
               defaultValue={filter}
-              onChange={(value) => setFilter(value)}
+              onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter tanlang"
             />
           </div>

@@ -97,8 +97,8 @@ export default function SpecialTestsTable({
   ];
   const [optionValue, setOptionValue] = useState("5");
 
-  const handleSelectChange = (value: string) => {
-    setOptionValue(value);
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setOptionValue(e.target.value);
   };
 
   const [currentPage, setCurrentPage] = useState(1);

@@ -210,12 +210,12 @@ const handleResetFilters = () => {
                         <Select
                           options={[new Option('Barcha guruhlar', ''), ...all_group_options]}
                           defaultValue={selectedGroup}
-                          onChange={(value) => {
-                            setSelectedGroup(value);
-                            if (value && selectedStudent) {
+                          onChange={(e) => {
+                            setSelectedGroup(e.target.value);
+                            if (e.target.value && selectedStudent) {
                               // Check if selected student is in new group
                               const student = (data || []).find((d: any) => d.student_id?.toString() === selectedStudent);
-                              if (student?.student?.group_id?.toString() !== value) {
+                              if (student?.student?.group_id?.toString() !== e.target.value) {
                                 setSelectedStudent('');
                               }
                             }
@@ -229,7 +229,7 @@ const handleResetFilters = () => {
                         <Select
                           options={[new Option('Barcha studentlar', ''), ...filteredStudents]}
                           defaultValue={selectedStudent}
-                          onChange={setSelectedStudent}
+                          onChange={(e) => setSelectedStudent(e.target.value)}
                           className="dark:bg-dark-900"
                         />
                       </div>
@@ -242,7 +242,7 @@ const handleResetFilters = () => {
                         <Select
                           options={[new Option('Barcha fanlar', ''), ...all_subject_options]}
                           defaultValue={selectedSubject}
-                          onChange={setSelectedSubject}
+                          onChange={(e) => setSelectedSubject(e.target.value)}
                           className="dark:bg-dark-900"
                         />
                       </div>
@@ -252,7 +252,7 @@ const handleResetFilters = () => {
                         <Select
                           options={[new Option('Barcha kitoblar', ''), ...filteredBooks]}
                           defaultValue={selectedBook}
-                          onChange={setSelectedBook}
+                          onChange={(e) => setSelectedBook(e.target.value)}
                           className="dark:bg-dark-900"
                         />
                       </div>
@@ -270,7 +270,7 @@ const handleResetFilters = () => {
                             new Option('Random test', 'random')
                           ]}
                           defaultValue={selectedType}
-                          onChange={setSelectedType}
+                          onChange={(e) => setSelectedType(e.target.value)}
                           className="dark:bg-dark-900"
                         />
                       </div>

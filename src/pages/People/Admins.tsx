@@ -298,7 +298,7 @@ const AdminsPage = () => {
                         { value: 'SUPER_ADMIN', label: 'Super Admin' },
                       ]}
                       defaultValue={formData.role}
-                      onChange={(value) => setFormData({ ...formData, role: value })}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                       placeholder="Rol tanlang"
                     />
                   </div>

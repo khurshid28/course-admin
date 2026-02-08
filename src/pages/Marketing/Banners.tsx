@@ -305,8 +305,8 @@ const BannersPage = () => {
                         ...courses.map(c => ({ value: c.id.toString(), label: c.title }))
                       ]}
                       defaultValue={formData.courseId?.toString() || ''}
-                      onChange={(value) => {
-                        const courseId = value ? parseInt(value) : undefined;
+                      onChange={(e) => {
+                        const courseId = e.target.value ? parseInt(e.target.value) : undefined;
                         const link = courseId ? `/courses/${courseId}` : '';
                         setFormData({ ...formData, courseId, link });
                       }}

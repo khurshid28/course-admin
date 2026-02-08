@@ -63,7 +63,7 @@ export default function StudentsPage() {
   };
 
 
-  let [Student, setStudent] = useState<Student>(emptyStudent);
+  let [student, setStudent] = useState<Student>(emptyStudent);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -117,13 +117,13 @@ export default function StudentsPage() {
     e.preventDefault();
 
     try {
-      if (Student.id) {
+      if (student.id) {
         // Edit existing student
-        await axiosClient.put(`/user/${Student.id}`, { ...Student });
+        await axiosClient.put(`/user/${student.id}`, { ...student });
         toast.success('Student muvaffaqiyatli yangilandi');
       } else {
         // Create new student
-        await axiosClient.post('/user', { ...Student });
+        await axiosClient.post('/user', { ...student });
         toast.success('Student muvaffaqiyatli yaratildi');
       }
       await refetch();
@@ -194,7 +194,7 @@ export default function StudentsPage() {
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {Student.id ? "Studentni tahrirlash" : "Student qo'shish"}
+              {student.id ? "Studentni tahrirlash" : "Student qo'shish"}
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
               Yangi student qo'shish uchun barcha ma'lumotlarni kiriting.
@@ -207,10 +207,10 @@ export default function StudentsPage() {
                   <Label>Ism</Label>
                   <Input
                     type="text"
-                    value={Student.firstName || ''}
+                    value={student.firstName || ''}
                     onChange={(e) =>
                       setStudent({
-                        ...Student,
+                        ...student,
                         firstName: e.target.value,
                       })
                     }
@@ -223,10 +223,10 @@ export default function StudentsPage() {
                   <Label>Familiya</Label>
                   <Input
                     type="text"
-                    value={Student.surname || ''}
+                    value={student.surname || ''}
                     onChange={(e) =>
                       setStudent({
-                        ...Student,
+                        ...student,
                         surname: e.target.value,
                       })
                     }
@@ -239,10 +239,10 @@ export default function StudentsPage() {
                   <Label>Telefon raqami</Label>
                   <Input
                     type="text"
-                    value={Student.phone}
+                    value={student.phone}
                     onChange={(e) =>
                       setStudent({
-                        ...Student,
+                        ...student,
                         phone: e.target.value,
                       })
                     }
@@ -255,10 +255,10 @@ export default function StudentsPage() {
                   <Label>Email</Label>
                   <Input
                     type="email"
-                    value={Student.email || ''}
+                    value={student.email || ''}
                     onChange={(e) =>
                       setStudent({
-                        ...Student,
+                        ...student,
                         email: e.target.value,
                       })
                     }

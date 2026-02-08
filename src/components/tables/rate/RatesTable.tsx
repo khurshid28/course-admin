@@ -194,12 +194,12 @@ export default function RatesTable({ data, groups, refetch }: {
   
  
   
-  const handleSelectGroupChange = (value: string) => {
-    setGroupoptionValue(value);
+  const handleSelectGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setGroupoptionValue(e.target.value);
   };
 
-  const handleSelectChange = (value: string) => {
-    setoptionValue(value);
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setoptionValue(e.target.value);
   };
   
   // Pationation
